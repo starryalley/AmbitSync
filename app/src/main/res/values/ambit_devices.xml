@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="vid">5267</integer>
+    <integer-array name="pid">
+        <item>28</item>
+        <item>27</item>
+        <item>29</item>
+        <item>30</item>
+        <item>26</item>
+        <item>25</item>
+        <item>16</item>
+    </integer-array>
+</resources>

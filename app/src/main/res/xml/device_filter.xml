@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resource>
+    <!-- decimal values -->
+    <usb-device vendor-id="5276" product-id="16" /> <!-- ambit -->
+    <usb-device vendor-id="5276" product-id="25" /> <!-- ambit 2 -->
+    <usb-device vendor-id="5276" product-id="26" /> <!-- ambit 2S -->
+    <usb-device vendor-id="5276" product-id="27" /> <!-- ambit 3 Peak -->
+    <usb-device vendor-id="5276" product-id="28" /> <!-- ambit 3 Sport -->
+    <usb-device vendor-id="5276" product-id="29" /> <!-- ambit 2R -->
+</resource>

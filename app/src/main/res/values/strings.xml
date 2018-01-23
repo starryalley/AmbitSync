@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">AmbitSync</string>
+    <string name="folder_name">AmbitMoves</string>
+    <string name="choose_folder">Choose</string>
+    <string name="action_settings">Settings</string>
+    <string name="logcount">Moves</string>
+    <string name="bat">Battery</string>
+    <string name="disconnect_status">Disconnected</string>
+    <string name="connect_status">Ambit\nConnected</string>
+    <string name="connect_error">Connection\nError</string>
+    <string name="sync_header_status">Syncing\nHeader</string>
+    <string name="sync_move_status">Syncing\nMove</string>
+    <string name="saving_to">GPX Path:</string>
+    <string name="ext_not_available">External storage not available!</string>
+    <string name="ext_no_permission">No permission to storage. Please enable in Setting!</string>
+    <string name="ext_error">External storage error</string>
+    <string name="info_text">Please use an OTG cable and\nconnect the Ambit watch using\nthe normal Ambit USB cable to this device.\n\nWhen connected, wait a few seconds for the USB permission dialog to appear.</string>
+</resources>
