@@ -96,6 +96,7 @@ public class MainActivity extends Activity {
 
         uiUpdaterHandler = new Handler();
         lock = new ReentrantLock();
+        manager = (UsbManager) getSystemService(Context.USB_SERVICE);
         //mPrefs = getPreferences(MODE_PRIVATE);
 
         // get supported ambit VID/PID from resources
@@ -107,6 +108,12 @@ public class MainActivity extends Activity {
             Log.d(TAG, "restoring from saved state");
             ambit_device = savedInstanceState.getLong("ambit_device");
             connectedDevices = (HashMap<Integer, Integer>) savedInstanceState.getSerializable("connected_devices");
+            batteryPercentage = savedInstanceState.getInt("bat_percent");
+            if (connectedDevices.size() > 0 && isAmbitDisconnected()) {
+                Log.d(TAG, "ambit device already disconnected");
+                ambit_device = 0;
+                connectedDevices.clear();
+            }
         } else {
             ambit_device = 0;
         }
@@ -127,7 +134,7 @@ public class MainActivity extends Activity {
         mEntryListView.setAdapter(entryAdapter);
 
         // used for restore UI's state (visibility and text)
-        if (savedInstanceState != null) {
+        if (savedInstanceState != null && ambit_device != 0) {
             mInfoText.setVisibility(savedInstanceState.getInt("info_text_vis"));
             mEntryListView.setVisibility(savedInstanceState.getInt("listview_vis"));
             mBatteryProgress.setVisibility(savedInstanceState.getInt("bat_progress_vis"));
@@ -141,13 +148,10 @@ public class MainActivity extends Activity {
         }
 
         // getting USB permission and register Intent for USB device attach/detach events
-        manager = (UsbManager) getSystemService(Context.USB_SERVICE);
         registerReceiver(usbManagerBroadcastReceiver, new IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED));
         registerReceiver(usbManagerBroadcastReceiver, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
         registerReceiver(usbManagerBroadcastReceiver, new IntentFilter(ACTION_USB_PERMISSION));
-
         mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
-
 
         // Initial check for connected USB devices, set to fire in 1 sec
         new Handler().postDelayed(new Runnable() {
@@ -268,6 +272,7 @@ public class MainActivity extends Activity {
 
         outState.putLong("ambit_device", ambit_device);
         outState.putSerializable("connected_devices", connectedDevices);
+        outState.putInt("bat_percent", batteryPercentage);
 
         // saving item visibility and text content
         outState.putInt("info_text_vis", mInfoText.getVisibility());
@@ -648,18 +653,7 @@ public class MainActivity extends Activity {
                                 if (ambit_device != 0) {
                                     connectedDevices.put(device.getDeviceId(), connection.getFileDescriptor());
                                     showToast("Ambit Device Attached", Toast.LENGTH_SHORT);
-                                    uiUpdaterHandler.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            // when ambit device is attached and granted for permission
-                                            mAmbitStatusText.setText(getString(R.string.connect_status));
-                                            mInfoText.setVisibility(View.INVISIBLE);//will not bring it up ever
-                                            mEntryListView.setVisibility(View.VISIBLE);
-                                            mBatteryProgress.setVisibility(View.VISIBLE);
-                                            mBatteryText.setVisibility(View.VISIBLE);
-                                            mOutputPathText.setVisibility(View.VISIBLE);
-                                        }
-                                    });
+                                    setAmbitUIState(true);
 
                                     // start battery updater
                                     new Thread(batteryUpdater).start();
@@ -727,20 +721,7 @@ public class MainActivity extends Activity {
                             connectedDevices.remove(device.getDeviceId());
                             showToast("Ambit Device Removed", Toast.LENGTH_LONG);
                             //UI updates
-                            uiUpdaterHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    batteryPercentage = 0;
-                                    mBatteryProgress.setProgress(batteryPercentage);
-                                    mBatteryProgress.setVisibility(View.INVISIBLE);
-                                    mBatteryText.setText("");
-                                    mBatteryText.setVisibility(View.INVISIBLE);
-                                    mLogCountText.setText("");
-                                    mLogCountText.setVisibility(View.INVISIBLE);
-                                    mOutputPathText.setVisibility(View.INVISIBLE);
-                                    mAmbitStatusText.setText(getString(R.string.disconnect_status));
-                                }
-                            });
+                            setAmbitUIState(false);
                         }
                     }
                 }
@@ -749,6 +730,34 @@ public class MainActivity extends Activity {
             }
         }
     };
+
+    private void setAmbitUIState(final boolean ambit_connected) {
+        batteryPercentage = 0;
+        uiUpdaterHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (ambit_connected) {
+                    // when ambit device is attached and granted for permission
+                    mAmbitStatusText.setText(getString(R.string.connect_status));
+                    mInfoText.setVisibility(View.INVISIBLE);//will not bring it up ever
+                    mEntryListView.setVisibility(View.VISIBLE);
+                    mBatteryProgress.setVisibility(View.VISIBLE);
+                    mBatteryText.setVisibility(View.VISIBLE);
+                    mOutputPathText.setVisibility(View.VISIBLE);
+                } else {
+                    // when ambit device is detached
+                    mBatteryProgress.setProgress(batteryPercentage);
+                    mBatteryProgress.setVisibility(View.INVISIBLE);
+                    mBatteryText.setText("");
+                    mBatteryText.setVisibility(View.INVISIBLE);
+                    mLogCountText.setText("");
+                    mLogCountText.setVisibility(View.INVISIBLE);
+                    mOutputPathText.setVisibility(View.INVISIBLE);
+                    mAmbitStatusText.setText(getString(R.string.disconnect_status));
+                }
+            }
+        });
+    }
 
     // check if the USB device's VID/PID is among all ambit devices
     private boolean isAmbitDevice(UsbDevice device) {
@@ -776,6 +785,18 @@ public class MainActivity extends Activity {
                 break;
             }
         }
+    }
+
+    private boolean isAmbitDisconnected() {
+        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
+
+        while(deviceIterator.hasNext()) {
+            UsbDevice device = deviceIterator.next();
+            if (connectedDevices.containsKey(device.getDeviceId()))
+                return false;
+        }
+        return true;
     }
 
     /* reserved for future use
