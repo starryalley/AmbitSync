@@ -166,7 +166,6 @@ public class LogEntry implements Parcelable {
     }
 
     public boolean writeGPX(File file) {
-
         ArrayList<Integer> order = reorder();
         TrackPoint cur_tp = null;
         Log.d(TAG, "writeGPX(): total sample size: " + order.size());
@@ -254,7 +253,6 @@ public class LogEntry implements Parcelable {
 
         // loop through trackPoints and save
         GPXWriter gpxWriter = new GPXWriter();
-
         return gpxWriter.write(trackPoints, file);
     }
 
@@ -384,9 +382,7 @@ class TrackPoint implements Parcelable {
         this.hr.add(hr);
     }
 
-    public void setCad(int cad) {
-        this.cad.add(cad);
-    }
+    public void setCad(int cad) { this.cad.add(cad); }
 
     public void setDist(int dist) {
         this.dist.add(dist);
@@ -455,34 +451,34 @@ class TrackPoint implements Parcelable {
     public String toGPX() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("      <trkpt lat=\"" + lat +"\" lon=\"" + lon + "\">\n");
+        sb.append("      <trkpt lat=\"").append(lat).append("\" lon=\"").append(lon).append("\">\n");
         if (!alt.isEmpty())
-            sb.append("        <ele>" + calculateIntAverage(alt) + "</ele>\n");
-        sb.append("        <time>" + df.format(utc) + "</time>\n");
-        sb.append("        <extensions>\n");
+            sb.append("        <ele>").append(calculateIntAverage(alt)).append("</ele>\n");
+        sb.append("        <time>").append(df.format(utc)).append("</time>\n")
+          .append("        <extensions>\n");
         if (!hr.isEmpty()) {
-            sb.append("          <gpxtpx:TrackPointExtension xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\">\n");
-            sb.append("            <gpxtpx:hr>" + calculateIntAverage(hr) + "</gpxtpx:hr>\n");
-            sb.append("          </gpxtpx:TrackPointExtension>\n");
+            sb.append("          <gpxtpx:TrackPointExtension xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\">\n")
+              .append("            <gpxtpx:hr>").append(calculateIntAverage(hr)).append("</gpxtpx:hr>\n")
+              .append("          </gpxtpx:TrackPointExtension>\n");
         }
         if (!cad.isEmpty())
-            sb.append("          <gpxdata:cadence>" + calculateIntAverage(cad) + "</gpxdata:cadence>\n");
+            sb.append("          <gpxdata:cadence>").append(calculateIntAverage(cad)).append("</gpxdata:cadence>\n");
         if (!temp.isEmpty())
-            sb.append("          <gpxdata:temp>" + calculateAverage(temp) + "</gpxdata:temp>\n");
+            sb.append("          <gpxdata:temp>").append(calculateAverage(temp)).append("</gpxdata:temp>\n");
         if (!dist.isEmpty())
-            sb.append("          <gpxdata:distance>" + calculateIntAverage(dist) + "</gpxdata:distance>\n");
+            sb.append("          <gpxdata:distance>").append(calculateIntAverage(dist)).append("</gpxdata:distance>\n");
         if (!alt.isEmpty())
-            sb.append("          <gpxdata:altitude>" + calculateIntAverage(alt) + "</gpxdata:altitude>\n");
+            sb.append("          <gpxdata:altitude>").append(calculateIntAverage(alt)).append("</gpxdata:altitude>\n");
         if (!energy.isEmpty())
-            sb.append("          <gpxdata:energy>" + calculateAverage(energy) + "</gpxdata:energy>\n");
+            sb.append("          <gpxdata:energy>").append(calculateAverage(energy)).append("</gpxdata:energy>\n");
         if (!sea.isEmpty())
-            sb.append("          <gpxdata:seaLevelPressure>" + calculateAverage(sea) + "</gpxdata:seaLevelPressure>\n");
+            sb.append("          <gpxdata:seaLevelPressure>").append(calculateAverage(sea)).append("</gpxdata:seaLevelPressure>\n");
         if (!speed.isEmpty())
-            sb.append("          <gpxdata:speed>" + calculateAverage(speed) + "</gpxdata:speed>\n");
+            sb.append("          <gpxdata:speed>").append(calculateAverage(speed)).append("</gpxdata:speed>\n");
         if (!vspeed.isEmpty())
-            sb.append("          <gpxdata:verticalSpeed>" + calculateAverage(vspeed) + "</gpxdata:verticalSpeed>\n");
-        sb.append("        </extensions>\n");
-        sb.append("      </trkpt>\n");
+            sb.append("          <gpxdata:verticalSpeed>").append(calculateAverage(vspeed)).append("</gpxdata:verticalSpeed>\n");
+        sb.append("        </extensions>\n")
+          .append("      </trkpt>\n");
         return sb.toString();
     }
 

@@ -71,15 +71,15 @@ public class LogHeader implements Parcelable {
 
     public String getMoveDetail() {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format(Locale.getDefault(),"%.1f", distance/1000.0) +"km ");
-        sb.append("Elevation: " + ascent + "m ");
+        sb.append(String.format(Locale.getDefault(),"%.1f", distance/1000.0)).append("km ")
+          .append("Elevation: ").append(ascent).append("m ");
         if (heartrate_avg != 0)
-            sb.append("HR:" + heartrate_avg + " bpm\n");
+            sb.append("HR:").append(heartrate_avg).append(" bpm\n");
         else
             sb.append("\n");
-        sb.append("AvgSpd: " + String.format(Locale.getDefault(), "%.1f km/h ", speed_avg/1000.0));
+        sb.append("AvgSpd: ").append(String.format(Locale.getDefault(), "%.1f km/h ", speed_avg/1000.0));
         if (peak_training_effect != 0)
-            sb.append("PTE:" + String.format(Locale.getDefault(), "%.1f ", peak_training_effect/10.0));
+            sb.append("PTE:").append(String.format(Locale.getDefault(), "%.1f ", peak_training_effect/10.0));
 
         return sb.toString();
     }
