@@ -506,7 +506,7 @@ static void log_data_cb(void *obj, ambit_log_entry_t *log_entry)
                                              char_values);
                 (*env)->DeleteLocalRef(env, char_values);
             default:
-                __android_log_print(ANDROID_LOG_WARN, TAG, "sample type error");
+                __android_log_print(ANDROID_LOG_INFO, TAG, "sample type error");
         }
 
     }
