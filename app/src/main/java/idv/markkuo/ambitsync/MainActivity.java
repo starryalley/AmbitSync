@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,10 +42,13 @@ import idv.markkuo.ambitlog.LogHeader;
 public class MainActivity extends Activity {
     private static String TAG = "AmbitSync";
 
+    //for wakelock
+    PowerManager.WakeLock wakeLock;
+
     //for USB permission and access
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     private PendingIntent mPermissionIntent;
-    private UsbManager manager;
+    private UsbManager usbManager;
     private HashMap<Integer, Integer> connectedDevices = new HashMap<Integer, Integer>(); /* device ID: file descriptor */
 
     /* UI widgets handles */
@@ -97,7 +101,9 @@ public class MainActivity extends Activity {
 
         uiUpdaterHandler = new Handler();
         lock = new ReentrantLock();
-        manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        usbManager = (UsbManager) getSystemService(USB_SERVICE);
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,TAG);
         //mPrefs = getPreferences(MODE_PRIVATE);
 
         // get supported ambit VID/PID from resources
@@ -384,6 +390,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPreExecute() {
+            wakeLock.acquire();
             mAmbitStatusText.setText(getString(R.string.sync_header_status));
             record.setSyncProgress(0, 0, 0);
 
@@ -451,6 +458,11 @@ public class MainActivity extends Activity {
             entryAdapter.notifyDataSetChanged();
             mAmbitStatusText.setText(getString(R.string.connect_status));
             mBatteryProgress.setProgress(batteryPercentage);
+            try {
+                wakeLock.release();
+            } catch (RuntimeException e) {
+                Log.i(TAG, "wakelock release exception:" + e);
+            }
         }
     }
 
@@ -460,6 +472,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPreExecute() {
+            wakeLock.acquire();
             mAmbitStatusText.setText(getString(R.string.sync_move_status));
             Log.d(TAG,"Syncing activity... ");
             record.setSyncProgress(0, 0, 0);
@@ -541,6 +554,11 @@ public class MainActivity extends Activity {
                     // update Listview UI
                     entryAdapter.notifyDataSetChanged();
                 }
+            }
+            try {
+                wakeLock.release();
+            } catch (RuntimeException e) {
+                Log.i(TAG, "wakelock release exception:" + e);
             }
         }
     }
@@ -645,7 +663,7 @@ public class MainActivity extends Activity {
 
                         if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                             if(device != null) {
-                                connection = manager.openDevice(device);
+                                connection = usbManager.openDevice(device);
                                 int fd = connection.getFileDescriptor();
                                 Log.d(TAG,"Ambit device fd:" + fd + " (" + device.getVendorId() + "/" +
                                         device.getProductId() + ")");
@@ -705,7 +723,7 @@ public class MainActivity extends Activity {
                         UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 
                         if (isAmbitDevice(device))
-                            manager.requestPermission(device, mPermissionIntent);
+                            usbManager.requestPermission(device, mPermissionIntent);
                         else
                             Log.d(TAG, "not an Ambit device, ignore...");
                     }
@@ -778,21 +796,21 @@ public class MainActivity extends Activity {
 
     // check for newly connected Ambit device on the USB
     private void checkForDevices() {
-        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        HashMap<String, UsbDevice> deviceList = usbManager.getDeviceList();
         Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
 
         Log.d(TAG, "check for ambit device...");
         while(deviceIterator.hasNext()) {
             UsbDevice device = deviceIterator.next();
             if (isAmbitDevice(device)) {
-                manager.requestPermission(device, mPermissionIntent);
+                usbManager.requestPermission(device, mPermissionIntent);
                 break;
             }
         }
     }
 
     private boolean isAmbitDisconnected() {
-        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        HashMap<String, UsbDevice> deviceList = usbManager.getDeviceList();
         Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
 
         while(deviceIterator.hasNext()) {
