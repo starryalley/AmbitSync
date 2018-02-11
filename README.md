@@ -7,14 +7,14 @@ AmbitSync is an Android app to download sport logs (or "moves") from Suunto Ambi
 The app uses the excellent libambit (from [openambit](https://github.com/openambitproject/openambit)) to download "Moves" by the USB host controller on Android. It then converts to GPX format and save to your Android device's storage, which can later be mapped/analyzed by other apps or services. 
 
 **screenshot**
-![screenshot](screenshots/screen_20180122.png)
+![screenshot](images/screen_20180122.png)
 
 
 ## Limitations
 
 Ambit watch support is provided solely by the awesome [openambit project](https://github.com/openambitproject/openambit). If your watch is supported by openambit, it should work here. No functional change is made in the underlying libambit except for a minor change to support Android. See below for changes made on libambit. 
 
-AmbitSync does read-only access from your watch and converts them into GPX format following a simple algorithm (see blow "GPX conversion" section). **It doesn't "sync" to Movescount website at all, nor it does any query from Movescount.** The app doesn't require network access.
+AmbitSync does read-only access from your watch and converts them into GPX format following a simple algorithm (see below "GPX conversion" section). **It doesn't "sync" to Movescount website at all, nor does it make any query from Movescount.** The app simply doesn't require network access.
 
 
 ## Tested devices
