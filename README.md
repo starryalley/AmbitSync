@@ -2,7 +2,10 @@
 
 Ever think about viewing your workout result using Strava or other similar services/app when you just finish it somewhere without your PC?
 
-[AmbitSync from Google Play Store](https://play.google.com/store/apps/details?id=idv.markkuo.ambitsync&rdid=idv.markkuo.ambitsync)
+
+<a href='https://play.google.com/store/apps/details?id=idv.markkuo.ambitsync'>
+<img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' height="100"/></a>
+
 
 
 AmbitSync is an Android app to download sport logs (or "moves") from Suunto Ambit GPS watches and convert them to GPX file right on your Android device through the USB cable.
