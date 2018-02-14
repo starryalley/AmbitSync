@@ -34,6 +34,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -230,18 +235,6 @@ public class MainActivity extends Activity {
 
         checkGPXOutputLocation();
 
-        //refresh log download status from reading external storage
-        for (LogEntry e: record.getEntries()) {
-            //load downloaded from File
-            if (gpxDir != null) {
-                File file = new File(gpxDir, e.getFilename("gpx"));
-                if (file.exists())
-                    e.setDownloaded(true);
-                else
-                    e.setDownloaded(false);
-            }
-        }
-
         // finally we setup a battery query operation every 10 sec in a background thread
         // Note that it's not started at this point
         batteryUpdater = new Runnable() {
@@ -333,7 +326,55 @@ public class MainActivity extends Activity {
     protected void onStop() {
         super.onStop();
         Log.v(TAG, "onStop");
-        //TODO: maybe saving downloaded AmbitRecord to filesystem?
+        //saving "only" log headers to filesystem
+        record.clearEntrySamples();
+        try {
+            //deleteFile("ambit_move_headers");
+            FileOutputStream fos = openFileOutput("ambit_move_headers", Context.MODE_PRIVATE);
+            ObjectOutputStream os = new ObjectOutputStream(fos);
+            os.writeObject(record.getEntries());
+            os.close();
+            fos.close();
+            Log.d(TAG, "saving log header done. Total " + record.getEntries().size() + " entries saved");
+        } catch (Exception e) {
+            Log.w(TAG, "saving log header exception:" + e);
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.v(TAG, "onStart");
+        //reading log headers from filesystem, if any
+        try {
+            FileInputStream fis = openFileInput("ambit_move_headers");
+            ObjectInputStream is = new ObjectInputStream(fis);
+            record.setEntries((ArrayList<LogEntry>) is.readObject());
+            is.close();
+            fis.close();
+            Log.d(TAG, "reading log header done. Total " + record.getEntries().size() + " entries read");
+        } catch (FileNotFoundException e) {
+            Log.i(TAG, "no saved log. Connect Ambit device to sync for the first time");
+        } catch (Exception e) {
+            Log.w(TAG, "reading log header exception:" + e);
+        }
+
+        if (record.getEntries().size() > 0) {
+            mInfoText.setVisibility(View.INVISIBLE);
+            mEntryListView.setVisibility(View.VISIBLE);
+
+            //refresh log download status from reading external storage
+            for (LogEntry e: record.getEntries()) {
+                //load downloaded from File
+                if (gpxDir != null) {
+                    File file = new File(gpxDir, e.getFilename("gpx"));
+                    if (file.exists())
+                        e.setDownloaded(true);
+                    else
+                        e.setDownloaded(false);
+                }
+            }
+        }
     }
 
     @Override
@@ -413,7 +454,7 @@ public class MainActivity extends Activity {
             wakeLock.acquire();
             mAmbitStatusText.setText(getString(R.string.sync_header_status));
             record.setSyncProgress(0, 0, 0);
-
+            record.clearEntries();
             // another progress update thread which calls on publishProgress()
             new Thread() {
                 int progress;
@@ -474,7 +515,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(ArrayList<LogEntry> data) {
-            Log.d(TAG, "log header aync task done!");
+            Log.d(TAG, "log header aync task done! Total " + data.size() + " moves");
             entryAdapter.notifyDataSetChanged();
             mAmbitStatusText.setText(getString(R.string.connect_status));
             mBatteryProgress.setProgress(batteryPercentage);

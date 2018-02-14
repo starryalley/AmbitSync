@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ import java.util.Date;
  *
  * When a LogEntry comes without any samples, it is not yet downloaded from Ambit
  */
-public class LogEntry implements Parcelable {
+public class LogEntry implements Parcelable, Serializable {
     private final static String TAG = "AmbitLogEntry";
     LogHeader header;
     ArrayList<LogSample> samples = new ArrayList<LogSample>();
@@ -287,7 +288,7 @@ public class LogEntry implements Parcelable {
 }
 
 // GPX <trkpt> tag representation
-class TrackPoint implements Parcelable {
+class TrackPoint implements Parcelable, Serializable {
     private double lat, lon;
     private Date utc;
 

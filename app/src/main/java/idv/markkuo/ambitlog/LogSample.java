@@ -11,6 +11,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +42,7 @@ class SAMPLE_TYPE{
 }
 
 // interface for a storing a log sample read directly from Ambit
-abstract class LogSampleInterface implements Parcelable {
+abstract class LogSampleInterface implements Parcelable, Serializable {
     static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
     public abstract String toString();

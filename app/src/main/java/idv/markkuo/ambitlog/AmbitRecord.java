@@ -123,6 +123,19 @@ public class AmbitRecord implements Parcelable {
         return entries;
     }
 
+    public void setEntries(ArrayList<LogEntry> newEntries) {
+        clearEntries();
+        this.entries.addAll(newEntries);
+    }
+
+    public void clearEntries() { entries.clear();}
+
+    // clear all samples from all entries. After this call, log header is still there
+    public void clearEntrySamples() {
+        for (LogEntry e: entries) {
+            e.samples.clear();
+        }
+    }
 
     // query current stored records and print to Android logcat
     // TODO: find a place to get it called and printed. Not used.

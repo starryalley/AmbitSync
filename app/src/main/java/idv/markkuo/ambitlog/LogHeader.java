@@ -3,6 +3,7 @@ package idv.markkuo.ambitlog;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -11,7 +12,7 @@ import java.util.Locale;
 /**
  * Represents a log entry's header
  */
-public class LogHeader implements Parcelable {
+public class LogHeader implements Parcelable, Serializable {
     Date datetime;
     int duration;              /* ms */
     int ascent;                /* m */
