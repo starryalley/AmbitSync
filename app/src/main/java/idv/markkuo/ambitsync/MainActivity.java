@@ -3,6 +3,7 @@ package idv.markkuo.ambitsync;
 import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -12,16 +13,19 @@ import android.graphics.Color;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
@@ -182,7 +186,23 @@ public class MainActivity extends Activity {
                 }
 
                 if (e.isDownloaded()) {
-                    showToast("Move already downloaded!", Toast.LENGTH_LONG);
+                    if (gpxDir != null) {
+                        File file = new File(gpxDir, e.getFilename("gpx"));
+                        if (file.exists()) {
+                            // open the gpx file by other app
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            Uri uri = FileProvider.getUriForFile(MainActivity.this,
+                                    BuildConfig.APPLICATION_ID + ".provider", file);
+                            intent.setDataAndType(uri,
+                                    MimeTypeMap.getSingleton().getMimeTypeFromExtension("gpx"));
+                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            try {
+                                startActivity(intent);
+                            } catch (ActivityNotFoundException ex) {
+                                showToast("No handler for gpx files", Toast.LENGTH_SHORT);
+                            }
+                        }
+                    }
                     return;
                 }
 
