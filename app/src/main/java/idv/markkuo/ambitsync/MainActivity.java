@@ -177,18 +177,43 @@ public class MainActivity extends Activity {
            }
         }, 1000);
 
+        // setup Listview long click function
+        mEntryListView.setLongClickable(true);
+        mEntryListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapter, View view, int position, long l) {
+                final LogEntry e = (LogEntry)adapter.getItemAtPosition(position);
+                Log.d(TAG, "User long click on:" + e.toString());
+
+                //ignore downloaded moves
+                if (e.isDownloaded())
+                    return false;
+
+                if (ambit_device == 0) {
+                    showToast("Ambit device not connected!", Toast.LENGTH_SHORT);
+                    return false;
+                }
+
+                // now we can start downloading move...
+                showToast("Downloading Move:" + e.toString(), Toast.LENGTH_LONG);
+                uiUpdaterHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        e.markForSync(true);
+                        new LogAsyncTask().execute(e);
+                    }
+                });
+
+                return true;
+            }
+        });
+
         // setup Listview click function
         mEntryListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapter, View view, int position, long l) {
                 final LogEntry e = (LogEntry)adapter.getItemAtPosition(position);
                 Log.d(TAG, "User click on:" + e.toString());
-                //TODO: pop up to ask user to grant download, maybe?
-
-                if (ambit_device == 0) {
-                    showToast("Ambit device not connected!", Toast.LENGTH_LONG);
-                    return;
-                }
 
                 if (e.isDownloaded()) {
                     if (gpxDir != null) {
@@ -210,16 +235,8 @@ public class MainActivity extends Activity {
                     }
                     return;
                 }
-
-                // now we can start downloading move...
-                showToast("Downloading Move:" + e.toString(), Toast.LENGTH_LONG);
-                uiUpdaterHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        e.markForSync(true);
-                        new LogAsyncTask().execute(e);
-                    }
-                });
+                if (ambit_device != 0)
+                    showToast("Long press to download Move", Toast.LENGTH_SHORT);
             }
         });
 
