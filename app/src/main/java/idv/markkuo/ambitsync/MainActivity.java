@@ -363,17 +363,19 @@ public class MainActivity extends Activity {
         super.onStart();
         Log.v(TAG, "onStart");
         //reading log headers from filesystem, if any
-        try {
-            FileInputStream fis = openFileInput("ambit_move_headers");
-            ObjectInputStream is = new ObjectInputStream(fis);
-            record.setEntries((ArrayList<LogEntry>) is.readObject());
-            is.close();
-            fis.close();
-            Log.d(TAG, "reading log header done. Total " + record.getEntries().size() + " entries read");
-        } catch (FileNotFoundException e) {
-            Log.i(TAG, "no saved log. Connect Ambit device to sync for the first time");
-        } catch (Exception e) {
-            Log.w(TAG, "reading log header exception:" + e);
+        if (record.getEntries().size() == 0) {
+            try {
+                FileInputStream fis = openFileInput("ambit_move_headers");
+                ObjectInputStream is = new ObjectInputStream(fis);
+                record.setEntries((ArrayList<LogEntry>) is.readObject());
+                is.close();
+                fis.close();
+                Log.d(TAG, "reading log header done. Total " + record.getEntries().size() + " entries read");
+            } catch (FileNotFoundException e) {
+                Log.i(TAG, "no saved log. Connect Ambit device to sync for the first time");
+            } catch (Exception e) {
+                Log.w(TAG, "reading log header exception:" + e);
+            }
         }
 
         if (record.getEntries().size() > 0) {
