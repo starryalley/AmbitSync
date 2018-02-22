@@ -60,39 +60,110 @@ public class LogHeader implements Parcelable, Serializable {
 
     private static String formatDuration(int dur) {
         int s = dur / 1000; //ms to sec
-        if (s/3600 >= 1)
-            return String.format("%d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60);
-        else
-            return String.format("%02d:%02d", (s % 3600) / 60, s % 60);
+
+        return String.format("%d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60);
     }
 
     public String toString() {
         return "[" + activity_name + "] @ " + sdf.format(datetime) + "(" + formatDuration(duration) + ")";
     }
 
+    // getters to String, used for GUI display
+
     public String getMoveDetail() {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format(Locale.getDefault(),"%.1f", distance/1000.0)).append("km ")
+        sb.append(String.format("%.1f", distance/1000.0)).append("km ")
           .append("Elev:").append(ascent).append("m");
         if (heartrate_avg != 0)
             sb.append(" HR:").append(heartrate_avg);
         sb.append("\n");
-        sb.append("AvgSpd:").append(String.format(Locale.getDefault(), "%.1f km/h ", speed_avg/1000.0));
+        sb.append("AvgSpd:").append(String.format( "%.1f km/h ", speed_avg/1000.0));
         if (peak_training_effect != 0)
-            sb.append("PTE:").append(String.format(Locale.getDefault(), "%.1f ", peak_training_effect/10.0));
+            sb.append("PTE:").append(String.format( "%.1f ", peak_training_effect/10.0));
 
         return sb.toString();
     }
 
-    public String getMoveType() {
-        return activity_name;
-    }
+    // getters for move info activity
 
-    public String getMoveTime() {
-        return sdf.format(datetime);
-    }
-
+    public String getMoveType() { return activity_name; }
+    public String getMoveTime() { return sdf.format(datetime); }
     public String getMoveDuration() { return formatDuration(duration); }
+    public String getMoveAscentTime() { return formatDuration(ascent_time); }
+    public String getMoveAscent() { return String.format("%d m", ascent); }
+    public String getMoveDescentTime() { return formatDuration(descent_time); }
+    public String getMoveDescent() { return String.format("%d m", descent); }
+
+    public String getMoveRecoveryTime() {
+        if (recovery_time > 0)
+            return String.format("%d h", Math.round(recovery_time/1000.0/60.0/60.0));
+        else
+            return "-";
+    }
+
+    public String getMoveSpeed() { return String.format("%.1f km/h", speed_avg/1000.0); }
+    public String getMoveSpeedMax() { return String.format("(Max: %.1f)", speed_max/1000.0); }
+
+    public String getMoveAltMax() {
+        if (altitude_max >= 32767)
+            return "-";
+        else
+            return String.format("%d m", altitude_max);
+    }
+    public String getMoveAltMin() {
+        if (altitude_min <= -32768)
+            return "-";
+        else
+            return String.format("%d m", altitude_min);
+    }
+
+    public String getMoveHR() {
+        if (heartrate_avg != 0)
+            return String.format("%d bpm", heartrate_avg);
+        else
+            return "-";
+    }
+    public String getMoveHRRange() {
+        if (heartrate_avg != 0)
+            return String.format("(%d-%d)", heartrate_min, heartrate_max);
+        else
+            return "";
+    }
+
+    public String getMovePTE() {
+        if (peak_training_effect != 0)
+            return Double.toString(peak_training_effect/10.0);
+        else
+            return "-";
+    }
+
+    public String getMoveTemp() {
+        return String.format("%.1f - %.1f°C", temperature_min/10.0, temperature_max/10.0);
+    }
+
+    public String getMoveDistance() { return String.format("%.02f km", distance/1000.0); }
+
+    public String getMoveCalories() {
+        if (energy_consumption > 0)
+            return String.format("%d kcal", energy_consumption);
+        else
+            return "-";
+    }
+
+    public String getMoveCadence() {
+        if (cadence_avg > 0)
+            return String.format("%d rpm", cadence_avg);
+        else
+            return "-";
+    }
+    public String getMoveCadenceMax() {
+        if (cadence_max > 0)
+            return String.format("(Max: %d)", cadence_max);
+        else
+            return "";
+    }
+
+    // end of getter functions
 
     public String getMovescountFilePrefix() {
         // yeah, make it similar to Movescount's GPX export filename

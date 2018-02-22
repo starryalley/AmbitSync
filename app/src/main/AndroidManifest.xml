@@ -29,6 +29,10 @@
             <meta-data android:name="android.hardware.usb.action.USB_DEVICE_DETACHED"
                 android:resource="@xml/device_filter" />
         </activity>
+        <activity
+            android:name=".MoveInfoActivity"
+            android:label="MoveInfo">
+        </activity>
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="${applicationId}.provider"

@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="idv.markkuo.ambitsync.MoveInfoActivity">
+
+    <GridLayout
+        android:id="@+id/moveGridLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="16dp"
+        android:columnCount="5">
+
+        <!-- row 0 -->
+        <TextView
+            android:id="@+id/moveDateTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="" />
+
+        <TextView
+            android:id="@+id/moveState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Small" />
+
+        <Space android:layout_gravity="fill" />
+        <Space android:layout_gravity="fill" />
+        <Space android:layout_gravity="fill" />
+
+        <!-- row 1 -->
+        <TextView
+            android:id="@+id/moveType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:layout_marginTop="0dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Large" />
+
+        <TextView
+            android:id="@+id/moveDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:layout_marginTop="0dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Large" />
+
+        <Space android:layout_gravity="fill" />
+        <Space android:layout_gravity="fill" />
+        <Space android:layout_gravity="fill" />
+
+        <!-- row 2 -->
+
+        <TextView
+            android:id="@+id/moveDistanceText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/distance" />
+
+        <TextView
+            android:id="@+id/moveSpeedText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/speed" />
+
+        <TextView
+            android:id="@+id/moveAscentText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/ascent" />
+
+        <TextView
+            android:id="@+id/moveDescentText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/descent" />
+
+        <TextView
+            android:id="@+id/moveAscentTimeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/ascent_time" />
+
+        <!-- row 3 -->
+
+        <TextView
+            android:id="@+id/moveDistance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <TextView
+            android:id="@+id/moveSpeed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+
+        <TextView
+            android:id="@+id/moveAscent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <TextView
+            android:id="@+id/moveDescent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <TextView
+            android:id="@+id/moveAscentTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <!-- row 4 -->
+
+        <TextView
+            android:id="@+id/moveDescentTimeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/descent_time" />
+
+        <TextView
+            android:id="@+id/moveAltMaxText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/alt_max" />
+
+        <TextView
+            android:id="@+id/moveAltMinText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/alt_min" />
+
+        <TextView
+            android:id="@+id/moveTempText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/temperature" />
+
+        <TextView
+            android:id="@+id/moveHRText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/heart_rate" />
+
+        <!-- row 5 -->
+
+        <TextView
+            android:id="@+id/moveDescentTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+
+        <TextView
+            android:id="@+id/moveAltMax"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <TextView
+            android:id="@+id/moveAltMin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <TextView
+            android:id="@+id/moveTemp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <TextView
+            android:id="@+id/moveHR"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <!-- row 6 -->
+
+        <TextView
+            android:id="@+id/movePTEText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/pte" />
+
+        <TextView
+            android:id="@+id/moveRecoveryTimeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/recovery_time" />
+
+        <TextView
+            android:id="@+id/moveCaloriesText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/calories" />
+
+        <TextView
+            android:id="@+id/moveCadenceText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:text="@string/cadence" />
+
+        <Space android:layout_gravity="fill" />
+
+        <!-- row 7 -->
+
+        <TextView
+            android:id="@+id/movePTE"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <TextView
+            android:id="@+id/moveRecoveryTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+
+        <TextView
+            android:id="@+id/moveCalories"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <TextView
+            android:id="@+id/moveCadence"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:padding="2dp"
+            android:text=""
+            android:textAppearance="@android:style/TextAppearance.Medium" />
+
+        <Space android:layout_gravity="fill" />
+
+    </GridLayout>
+
+    <Button
+        android:id="@+id/buttonOpenGPX"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/moveGridLayout"
+        android:text="@string/open_gpx" />
+
+    <TextView
+        android:id="@+id/moveFilePath"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/buttonOpenGPX"
+        android:padding="2dp"
+        android:text="" />
+
+</RelativeLayout>

@@ -3,7 +3,6 @@ package idv.markkuo.ambitsync;
 import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
-import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -13,19 +12,16 @@ import android.graphics.Color;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
-import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
@@ -177,6 +173,18 @@ public class MainActivity extends Activity {
            }
         }, 1000);
 
+        // check external storage permission and request if needed
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (getApplicationContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                this.requestPermissions(
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+            }
+        }
+
+        checkGPXOutputLocation();
+
         // setup Listview long click function
         mEntryListView.setLongClickable(true);
         mEntryListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -213,44 +221,49 @@ public class MainActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> adapter, View view, int position, long l) {
                 final LogEntry e = (LogEntry)adapter.getItemAtPosition(position);
+                LogHeader h = e.getHeader();
+
                 Log.d(TAG, "User click on:" + e.toString());
 
-                if (e.isDownloaded()) {
-                    if (gpxDir != null) {
-                        File file = new File(gpxDir, e.getFilename("gpx"));
-                        if (file.exists()) {
-                            // open the gpx file by other app
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            Uri uri = FileProvider.getUriForFile(MainActivity.this,
-                                    BuildConfig.APPLICATION_ID + ".provider", file);
-                            intent.setDataAndType(uri,
-                                    MimeTypeMap.getSingleton().getMimeTypeFromExtension("gpx"));
-                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            try {
-                                startActivity(intent);
-                            } catch (ActivityNotFoundException ex) {
-                                showToast("No handler for gpx files", Toast.LENGTH_SHORT);
-                            }
-                        }
-                    }
+                // if syncheader is ongoing, ignore
+                if (wakeLock.isHeld()) {
+                    showToast("Syncing, wait...", Toast.LENGTH_SHORT);
                     return;
                 }
-                if (ambit_device != 0)
+
+                if (ambit_device != 0 && !e.isDownloaded())
                     showToast("Long press to download Move", Toast.LENGTH_SHORT);
+
+                // start another activity to show the details
+                Intent intent = new Intent(MainActivity.this, MoveInfoActivity.class);
+
+                intent.putExtra("moveDownloaded", e.isDownloaded());
+                intent.putExtra("moveDateTime", h.getMoveTime());
+                intent.putExtra("moveDuration", h.getMoveDuration());
+                intent.putExtra("moveAscent", h.getMoveAscent());
+                intent.putExtra("moveDescent", h.getMoveDescent());
+                intent.putExtra("moveAscentTime", h.getMoveAscentTime());
+                intent.putExtra("moveDescentTime", h.getMoveDescentTime());
+                intent.putExtra("moveRecoveryTime", h.getMoveRecoveryTime());
+                intent.putExtra("moveSpeed", h.getMoveSpeed());
+                intent.putExtra("moveSpeedMax", h.getMoveSpeedMax());
+                intent.putExtra("moveAltMax", h.getMoveAltMax());
+                intent.putExtra("moveAltMin", h.getMoveAltMin());
+                intent.putExtra("moveHR", h.getMoveHR());
+                intent.putExtra("moveHRRange", h.getMoveHRRange());
+                intent.putExtra("movePTE", h.getMovePTE());
+                intent.putExtra("moveType", h.getMoveType());
+                intent.putExtra("moveTemp", h.getMoveTemp());
+                intent.putExtra("moveDistance", h.getMoveDistance());
+                intent.putExtra("moveCalories", h.getMoveCalories());
+                intent.putExtra("moveCadenceMax", h.getMoveCadenceMax());
+                intent.putExtra("moveCadence", h.getMoveCadence());
+                intent.putExtra("gpxDir", gpxDir);
+                intent.putExtra("moveFileName", e.getFilename("gpx"));
+
+                startActivity(intent);
             }
         });
-
-        // check external storage permission and request if needed
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (getApplicationContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-                    PackageManager.PERMISSION_GRANTED) {
-                this.requestPermissions(
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-            }
-        }
-
-        checkGPXOutputLocation();
 
         // finally we setup a battery query operation every 10 sec in a background thread
         // Note that it's not started at this point
