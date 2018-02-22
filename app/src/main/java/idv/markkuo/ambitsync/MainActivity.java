@@ -343,18 +343,19 @@ public class MainActivity extends Activity {
     protected void onStop() {
         super.onStop();
         Log.v(TAG, "onStop");
-        //saving "only" log headers to filesystem
-        record.clearEntrySamples();
-        try {
-            //deleteFile("ambit_move_headers");
-            FileOutputStream fos = openFileOutput("ambit_move_headers", Context.MODE_PRIVATE);
-            ObjectOutputStream os = new ObjectOutputStream(fos);
-            os.writeObject(record.getEntries());
-            os.close();
-            fos.close();
-            Log.d(TAG, "saving log header done. Total " + record.getEntries().size() + " entries saved");
-        } catch (Exception e) {
-            Log.w(TAG, "saving log header exception:" + e);
+        if (record.getEntries().size() > 0) {
+            //saving "only" log headers to filesystem
+            record.clearEntrySamples();
+            try {
+                FileOutputStream fos = openFileOutput("ambit_move_headers", Context.MODE_PRIVATE);
+                ObjectOutputStream os = new ObjectOutputStream(fos);
+                os.writeObject(record.getEntries());
+                os.close();
+                fos.close();
+                Log.d(TAG, "saving log header done. Total " + record.getEntries().size() + " entries saved");
+            } catch (Exception e) {
+                Log.w(TAG, "saving log header exception:" + e);
+            }
         }
     }
 
@@ -368,6 +369,7 @@ public class MainActivity extends Activity {
                 FileInputStream fis = openFileInput("ambit_move_headers");
                 ObjectInputStream is = new ObjectInputStream(fis);
                 record.setEntries((ArrayList<LogEntry>) is.readObject());
+                entryAdapter.notifyDataSetChanged();
                 is.close();
                 fis.close();
                 Log.d(TAG, "reading log header done. Total " + record.getEntries().size() + " entries read");
@@ -393,6 +395,7 @@ public class MainActivity extends Activity {
                         e.setDownloaded(false);
                 }
             }
+            entryAdapter.notifyDataSetChanged();
         }
     }
 
