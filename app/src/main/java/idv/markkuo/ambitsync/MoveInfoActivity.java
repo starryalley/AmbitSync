@@ -67,7 +67,7 @@ public class MoveInfoActivity extends Activity {
         if (isDownloaded)
             moveState.setText("(GPX downloaded)");
         else
-            moveState.setText("(not downloaded)");
+            moveState.setText("");
         moveDateTime.setText(getIntent().getStringExtra("moveDateTime"));
         moveDuration.setText(getIntent().getStringExtra("moveDuration"));
         moveAscent.setText(getIntent().getStringExtra("moveAscent"));
