@@ -10,10 +10,19 @@ Ever think about viewing your workout result using Strava or other similar servi
 
 AmbitSync is an Android app to download sport logs (or "moves") from Suunto Ambit GPS watches and convert them to GPX file right on your Android device through the USB cable.
 
-The app uses the excellent libambit (from [openambit](https://github.com/openambitproject/openambit)) to download "Moves" by the USB host controller on Android. It then converts to GPX format and save to your Android device's storage, which can later be mapped/analyzed by other apps or services. 
+The app uses the excellent libambit (from [openambit](https://github.com/openambitproject/openambit)) to download "Moves" by the USB host controller on Android. It then converts to GPX format and save to your Android device's storage, which can later be mapped/analysed by other apps or services. 
 
 **screenshot**
-![screenshot](images/screen_20180122.png)
+
+![Main screen with USB permission dialog, when Ambit is attached](images/screen_main_usb_permission.png | width=300)
+
+![Main screen with downloading a move](images/screen_main.png | width=300)
+
+![Move detail screen](images/screen_move_detail.png | width=300)
+
+![Landscape mode main screen](images/screen_main_landscape.png | width=600)
+
+![Landscape mode mode detail screen](images/screen_move_detail_land.png | width=600)
 
 
 ## Limitations
@@ -25,7 +34,15 @@ AmbitSync does read-only access from your watch and converts them into GPX forma
 
 ## Tested devices
 
-Currently I have successfully run the app on Samsung S8 (Android 7.0) and Google Pixel 2 XL (Android 8.1). I use my Ambit 2 to test. No other Android devices or Ambit devices are tested yet.
+Currently I have successfully run the app on the following devices:
+- Samsung S8 (Android 7.0 and 8.0)
+- Google Pixel 2 XL (Android 8.0 and 8.1)
+- HTC one custom ROM (Android 6.x)
+- Google Nexus 5 (Android 6.0.1)
+
+Some people also report success with other phones. Devices with Android 4.2+ (API 17) and usb host mode should be able to run this app.
+
+I use my Ambit 2 to test.
 
 
 ## How to run
@@ -34,6 +51,8 @@ Sync the project, import it using Android Studio 3.0+ (I'm using 3.0.1 as of now
 
 Or use the app/release/app-release.apk in project and copy it to your device to install, or use adb:
 ```adb install -r app/release/app-release.apk```
+
+Or simply get it on [google play](https://play.google.com/store/apps/details?id=idv.markkuo.ambitsync)
 
 
 ## Technical details
@@ -82,7 +101,7 @@ libambit changes:
 4. fixing some compilation issues on Android: pmem20.c and protocol.c
 5. libambit.c: 
    - libambit_set_device(): used by Java to set the USB fd and path to the library
-   - libambit_create(): used by Java to initialize Ambit device based on VID/PID
+   - libambit_create(): used by Java to initialise Ambit device based on VID/PID
 
 ### Native code limitation
 
@@ -103,11 +122,8 @@ The `AmbitRecord` class holds everything read from Ambit watch and it is `Parcel
 
 ### Project TODO list
 
-- serialize read entries in app's private storage and read it when app is started
-  - Currently it's not necessary by re-reading the move user selects.
-
-- Separate the flow: user click to download a log, long-press to export GPX
-  - Currently the app exports the move (read from ambit, save to GPX) by clicking on the move header
+- Add Strava upload support (23.2.2018)
+  - yes, strava web version on mobile browser isn't so good for uploading GPX file manually. I should support it someday.
 
 - More move type tests:
   - only some basic GPS based move types are tested: "cycle", "treking", "run" etc. 
@@ -117,7 +133,9 @@ The `AmbitRecord` class holds everything read from Ambit watch and it is `Parcel
 
 Logcat TAG filter: 
 
-```adb logcat 'libambit:* AmbitSync:* AmbitRecord:* AmbitLogEntry:* AmbitGPXWriter:* libusb:* *:S'```
+```adb logcat 'libambit:* AmbitSync:* AmbitMoveInfo:* AmbitRecord:* AmbitLogEntry:* AmbitGPXWriter:* LogSample:* PeriodicLogSample:* libusb:* *:S'```
+
+(note: lots of verbose level log. You may want to use *:D instead for those tags)
 
 GPX file validator:
 
