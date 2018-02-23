@@ -14,15 +14,15 @@ The app uses the excellent libambit (from [openambit](https://github.com/openamb
 
 **screenshot**
 
-![Main screen with USB permission dialog, when Ambit is attached](images/screen_main_usb_permission.png)
+![Main screen with USB permission dialog, when Ambit is attached](images/screen_main_usb_permission.jpg)
 
-![Main screen with downloading a move](images/screen_main.png)
+![Main screen with downloading a move](images/screen_main.jpg)
 
-![Move detail screen](images/screen_move_detail.png)
+![Move detail screen](images/screen_move_detail.jpg)
 
-![Landscape mode main screen](images/screen_main_landscape.png)
+![Landscape mode main screen](images/screen_main_landscape.jpg)
 
-![Landscape mode mode detail screen](images/screen_move_detail_land.png)
+![Landscape mode mode detail screen](images/screen_move_detail_land.jpg)
 
 
 ## Limitations
