@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="5dp"
+    tools:context="idv.markkuo.ambitsync.MainActivity">
+
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="5"
+        android:orientation="vertical">
+
+        <ListView
+            android:id="@+id/listView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_above="@id/gpxOutputPathText"
+            android:visibility="invisible" />
+
+
+        <TextView
+            android:id="@+id/infoText"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_above="@id/gpxOutputPathText"
+            android:gravity="center"
+            android:text="@string/info_text" />
+
+        <TextView
+            android:id="@+id/gpxOutputPathText"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="5dp"
+            android:padding="5dp"
+            android:text=""
+            android:visibility="invisible"
+            tools:text="Path to external storage" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/gridLayout"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:padding="5dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/ambitStatusTextView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_gravity="bottom|center"
+            android:layout_weight="4"
+            android:maxLines="2"
+            android:padding="2dp"
+            android:text="@string/disconnect_status"
+            android:textAlignment="center"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/LogCountTextView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:maxLines="2"
+            android:text=""
+            android:textSize="14sp"
+            android:textAlignment="center"
+            android:visibility="invisible"
+            tools:text="XX Moves" />
+
+        <TextView
+            android:id="@+id/batteryTextView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_gravity="center|bottom"
+            android:layout_weight="1"
+            android:textSize="14sp"
+            android:text=""
+            android:textAlignment="center"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:visibility="invisible"
+            tools:text="@string/bat" />
+
+        <ProgressBar
+            android:id="@+id/batteryProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="50dp"
+            android:layout_height="0dp"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:layout_margin="10dp"
+            android:layout_weight="2"
+            android:animationResolution="@android:integer/config_mediumAnimTime"
+            android:background="@drawable/circle_shape"
+            android:indeterminate="false"
+            android:max="100"
+            android:padding="3dp"
+            android:progressDrawable="@drawable/progress_circle"
+            android:visibility="invisible" />
+
+    </LinearLayout>
+
+
+</LinearLayout>
