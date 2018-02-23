@@ -133,7 +133,7 @@ public class AmbitRecord implements Parcelable {
     // clear all samples from all entries. After this call, log header is still there
     public void clearEntrySamples() {
         for (LogEntry e: entries) {
-            e.samples.clear();
+            e.clear();
         }
     }
 

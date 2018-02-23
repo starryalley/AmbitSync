@@ -87,6 +87,8 @@ public class MainActivity extends Activity {
      * from deleting it upon orientation/config change, which is very expensive in this app
      */
     private static AmbitRecord record = new AmbitRecord();
+    // the move list for listview adapter
+    private static ArrayList<LogEntry> moveList = new ArrayList<LogEntry>();
     private int record_size = 0;
 
     // GPX file output directory
@@ -143,7 +145,7 @@ public class MainActivity extends Activity {
         mInfoText = (TextView) findViewById(R.id.infoText);
 
         // the main ListView initialization
-        entryAdapter = new MoveListAdapter(getApplicationContext(), record.getEntries());
+        entryAdapter = new MoveListAdapter(getApplicationContext(), moveList);
         mEntryListView.setAdapter(entryAdapter);
 
         // used for restore UI's state (visibility and text)
@@ -166,14 +168,6 @@ public class MainActivity extends Activity {
         registerReceiver(usbManagerBroadcastReceiver, new IntentFilter(ACTION_USB_PERMISSION));
         mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
 
-        // Initial check for connected USB devices, set to fire in 1 sec
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                checkForDevices();
-           }
-        }, 1000);
-
         // check external storage permission and request if needed
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (getApplicationContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
@@ -185,6 +179,14 @@ public class MainActivity extends Activity {
         }
 
         checkGPXOutputLocation();
+
+        // Initial check for connected USB devices, set to fire in 1 sec
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                checkForDevices();
+            }
+        }, 1000);
 
         // setup Listview long click function
         mEntryListView.setLongClickable(true);
@@ -222,7 +224,7 @@ public class MainActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> adapter, View view, int position, long l) {
                 final LogEntry e = (LogEntry)adapter.getItemAtPosition(position);
-                LogHeader h = e.getHeader();
+                final LogHeader h = e.getHeader();
 
                 Log.d(TAG, "User click on:" + e.toString());
 
@@ -308,11 +310,11 @@ public class MainActivity extends Activity {
             case PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE:
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    showToast("Permission granted to write GPX to external storage!",
+                    showToast("Permission granted to write GPX to storage!",
                             Toast.LENGTH_LONG);
                     checkGPXOutputLocation();
                 } else {
-                    showToast("Permission to write external storage denied! Not able to export GPX file",
+                    showToast("Permission to write storage denied! Not able to export GPX file",
                             Toast.LENGTH_LONG);
                 }
                 break;
@@ -368,7 +370,7 @@ public class MainActivity extends Activity {
                 os.writeObject(record.getEntries());
                 os.close();
                 fos.close();
-                Log.d(TAG, "saving log header done. Total " + record.getEntries().size() + " entries saved");
+                Log.d(TAG, "saving log header done. Total " + record_size + " entries saved");
             } catch (Exception e) {
                 Log.w(TAG, "saving log header exception:" + e);
             }
@@ -386,6 +388,8 @@ public class MainActivity extends Activity {
                 ObjectInputStream is = new ObjectInputStream(fis);
                 record.setEntries((ArrayList<LogEntry>) is.readObject());
                 record_size = record.getEntries().size();
+                moveList.clear();
+                moveList.addAll(record.getEntries());
                 entryAdapter.notifyDataSetChanged();
                 is.close();
                 fis.close();
@@ -460,7 +464,7 @@ public class MainActivity extends Activity {
                 if (!gpxDir.exists())
                     gpxDir.mkdirs();
                 if (!gpxDir.canWrite()) {
-                    Log.w(TAG, "Can't write to external storage path:" + gpxDir.getAbsolutePath());
+                    Log.w(TAG, "Can't write to storage path:" + gpxDir.getAbsolutePath());
                     mOutputPathText.setText(getString(R.string.ext_no_permission));
                 } else {
                     Log.d(TAG, "GPX Saving to" + gpxDir.getAbsolutePath());
@@ -533,7 +537,7 @@ public class MainActivity extends Activity {
                 return record.getEntries();
             }
 
-            //load downloaded from File
+            //refresh downloaded states from filesystem
             for (LogEntry e: record.getEntries()) {
                 if (gpxDir != null) {
                     File file = new File(gpxDir, e.getFilename("gpx"));
@@ -554,7 +558,9 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(ArrayList<LogEntry> data) {
-            Log.d(TAG, "log header aync task done! Total " + data.size() + " moves");
+            Log.d(TAG, "log header async task done! Total " + data.size() + " moves");
+            moveList.clear();
+            moveList.addAll(record.getEntries());
             entryAdapter.notifyDataSetChanged();
             mAmbitStatusText.setText(getString(R.string.connect_status));
             mBatteryProgress.setProgress(batteryPercentage);
@@ -651,10 +657,15 @@ public class MainActivity extends Activity {
                 } else {
                     // successful case
                     showToast("Move downloaded successfully!", Toast.LENGTH_LONG);
-                    // update Listview UI
-                    entryAdapter.notifyDataSetChanged();
                 }
             }
+
+            // mark memory for GC (in case the move is huge!)
+            log.clear();
+
+            // update Listview UI
+            entryAdapter.notifyDataSetChanged();
+
             try {
                 wakeLock.release();
             } catch (RuntimeException e) {

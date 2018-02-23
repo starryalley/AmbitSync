@@ -89,6 +89,8 @@ public class LogEntry implements Parcelable, Serializable {
 
     public LogHeader getHeader() { return header; }
 
+    public void clear() { samples.clear(); }
+
     // converts to filename String
     public String getFilename(String ext) { return header.getMovescountFilePrefix() + "." + ext; }
 
