@@ -87,6 +87,7 @@ public class MainActivity extends Activity {
      * from deleting it upon orientation/config change, which is very expensive in this app
      */
     private static AmbitRecord record = new AmbitRecord();
+    private int record_size = 0;
 
     // GPX file output directory
     private File gpxDir = null;
@@ -356,7 +357,9 @@ public class MainActivity extends Activity {
     protected void onStop() {
         super.onStop();
         Log.v(TAG, "onStop");
-        if (record.getEntries().size() > 0) {
+        if (record.getEntries().size() > 0 && record.getEntries().size() != record_size) {
+            record_size = record.getEntries().size();
+
             //saving "only" log headers to filesystem
             record.clearEntrySamples();
             try {
@@ -382,6 +385,7 @@ public class MainActivity extends Activity {
                 FileInputStream fis = openFileInput("ambit_move_headers");
                 ObjectInputStream is = new ObjectInputStream(fis);
                 record.setEntries((ArrayList<LogEntry>) is.readObject());
+                record_size = record.getEntries().size();
                 entryAdapter.notifyDataSetChanged();
                 is.close();
                 fis.close();
