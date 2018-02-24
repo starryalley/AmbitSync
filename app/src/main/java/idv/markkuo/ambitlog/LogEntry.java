@@ -256,7 +256,9 @@ public class LogEntry implements Parcelable, Serializable {
 
         // loop through trackPoints and save
         GPXWriter gpxWriter = new GPXWriter();
-        return gpxWriter.write(trackPoints, file);
+        boolean ret = gpxWriter.write(trackPoints, file);
+        trackPoints.clear();
+        return ret;
     }
 
     // unused for now. We don't output JSON
