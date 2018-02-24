@@ -176,7 +176,7 @@ public class LogEntry implements Parcelable, Serializable {
         for (int i = 0; i < order.size(); i++) {
             LogSample s = samples.get(order.get(i));
 
-            Log.v(TAG, "writeGPX(): reading sample at:" + order.get(i) + " type=" + s.type);
+            //Log.v(TAG, "writeGPX(): reading sample at:" + order.get(i) + " type=" + s.type);
             switch(s.type) {
                 case SAMPLE_TYPE.GPS_BASE:
                 case SAMPLE_TYPE.GPS_SMALL:
@@ -513,10 +513,10 @@ class GPXWriter {
             writer.append(footer);
             writer.flush();
             writer.close();
-            Log.d(TAG, "gpx written");
+            Log.d(TAG, "GPX written successfully");
             return true;
         } catch (IOException e) {
-            Log.e(TAG, "Error Writing Path:", e);
+            Log.e(TAG, "Error writing GPX:", e);
             return false;
         }
 

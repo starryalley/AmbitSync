@@ -213,11 +213,13 @@ static void log_data_cb(void *obj, ambit_log_entry_t *log_entry)
         /* shorter name */
         ambit_log_sample_t *s = &log_entry->samples[i];
 
+        /*
         __android_log_print(ANDROID_LOG_VERBOSE, TAG, "Sample #%d, type: %d, time: %04u-%02u-%02u %02u:%02u:%2.3f\n",
                i, log_entry->samples[i].type, log_entry->samples[i].utc_time.year,
                log_entry->samples[i].utc_time.month, log_entry->samples[i].utc_time.day,
                log_entry->samples[i].utc_time.hour, log_entry->samples[i].utc_time.minute,
                (1.0*log_entry->samples[i].utc_time.msec)/1000);
+        */
 
         /* temp values to pass to Java */
         jintArray values, values2;
@@ -505,6 +507,7 @@ static void log_data_cb(void *obj, ambit_log_entry_t *log_entry)
                                              s->utc_time.hour, s->utc_time.minute, s->utc_time.msec,
                                              char_values);
                 (*env)->DeleteLocalRef(env, char_values);
+                break;
             default:
                 __android_log_print(ANDROID_LOG_INFO, TAG, "sample type error");
         }

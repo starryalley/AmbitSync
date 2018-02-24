@@ -299,7 +299,7 @@ public class MainActivity extends Activity {
                         e.printStackTrace();
                     }
                 }
-                Log.v(TAG, "Exit battery update thread");
+                Log.d(TAG, "Exit battery update thread");
             }
         };
     }
@@ -758,10 +758,10 @@ public class MainActivity extends Activity {
         public void onReceive(Context context, Intent intent) {
             try {
                 String action = intent.getAction();
-                Log.v(TAG, "INTENT ACTION: " + action);
+                Log.d(TAG, "INTENT ACTION: " + action);
 
                 if (ACTION_USB_PERMISSION.equals(action)) {
-                    Log.v(TAG, "ACTION_USB_PERMISSION");
+                    Log.d(TAG, "ACTION_USB_PERMISSION");
 
                     synchronized (this) {
                         //we should exit and stop continuing because this may be due to orientation change
@@ -828,7 +828,7 @@ public class MainActivity extends Activity {
                 }
 
                 if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
-                    Log.v(TAG, "ACTION_USB_DEVICE_ATTACHED");
+                    Log.d(TAG, "ACTION_USB_DEVICE_ATTACHED");
 
                     synchronized(this) {
                         UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
@@ -841,7 +841,7 @@ public class MainActivity extends Activity {
                 }
 
                 if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-                    Log.v(TAG, "ACTION_USB_DEVICE_DETACHED");
+                    Log.d(TAG, "ACTION_USB_DEVICE_DETACHED");
 
                     synchronized(this) {
                         UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
