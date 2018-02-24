@@ -50,9 +50,6 @@ import idv.markkuo.ambitlog.LogHeader;
 public class MainActivity extends Activity {
     private static String TAG = "AmbitSync";
 
-    //for wakelock
-    PowerManager.WakeLock wakeLock;
-
     //for USB permission and access
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     private PendingIntent mPermissionIntent;
@@ -113,8 +110,6 @@ public class MainActivity extends Activity {
         uiUpdaterHandler = new Handler();
         lock = new ReentrantLock();
         usbManager = (UsbManager) getSystemService(USB_SERVICE);
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,TAG);
         //mPrefs = getPreferences(MODE_PRIVATE);
 
         // get supported ambit VID/PID from resources
@@ -230,12 +225,6 @@ public class MainActivity extends Activity {
                 final LogHeader h = e.getHeader();
 
                 Log.d(TAG, "User click on:" + e.toString());
-
-                // if syncheader is ongoing, ignore
-                if (wakeLock.isHeld()) {
-                    showToast("Syncing, wait...", Toast.LENGTH_SHORT);
-                    return;
-                }
 
                 if (ambit_device != 0 && !e.isDownloaded())
                     showToast("Long press to download Move", Toast.LENGTH_SHORT);
@@ -503,7 +492,6 @@ public class MainActivity extends Activity {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
             else
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-            wakeLock.acquire();
             mAmbitStatusText.setText(getString(R.string.sync_header_status));
             record.setSyncProgress(0, 0, 0);
             record.clearEntries();
@@ -573,11 +561,7 @@ public class MainActivity extends Activity {
             entryAdapter.notifyDataSetChanged();
             mAmbitStatusText.setText(getString(R.string.connect_status));
             mBatteryProgress.setProgress(batteryPercentage);
-            try {
-                wakeLock.release();
-            } catch (RuntimeException e) {
-                Log.i(TAG, "wakelock release exception:" + e);
-            }
+
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
@@ -595,7 +579,6 @@ public class MainActivity extends Activity {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
             else
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-            wakeLock.acquire();
             mAmbitStatusText.setText(getString(R.string.sync_move_status));
             Log.d(TAG,"Syncing activity... ");
             record.setSyncProgress(0, 0, 0);
@@ -684,11 +667,6 @@ public class MainActivity extends Activity {
             // update Listview UI
             entryAdapter.notifyDataSetChanged();
 
-            try {
-                wakeLock.release();
-            } catch (RuntimeException e) {
-                Log.i(TAG, "wakelock release exception:" + e);
-            }
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
