@@ -480,6 +480,8 @@ class TrackPoint implements Parcelable, Serializable {
             sb.append("          <gpxdata:speed>").append(calculateAverage(speed)).append("</gpxdata:speed>\n");
         if (!vspeed.isEmpty())
             sb.append("          <gpxdata:verticalSpeed>").append(calculateAverage(vspeed)).append("</gpxdata:verticalSpeed>\n");
+        if (!power.isEmpty())
+            sb.append("          <gpxdata:power>").append(calculateAverage(power)).append("</gpxdata:power>\n");
         sb.append("        </extensions>\n")
           .append("      </trkpt>\n");
         return sb.toString();
