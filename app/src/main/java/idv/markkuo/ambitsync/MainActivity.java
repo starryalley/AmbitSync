@@ -7,7 +7,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -22,6 +24,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
@@ -494,6 +497,12 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPreExecute() {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            int currentOrientation = getResources().getConfiguration().orientation;
+            if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE)
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+            else
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
             wakeLock.acquire();
             mAmbitStatusText.setText(getString(R.string.sync_header_status));
             record.setSyncProgress(0, 0, 0);
@@ -569,6 +578,8 @@ public class MainActivity extends Activity {
             } catch (RuntimeException e) {
                 Log.i(TAG, "wakelock release exception:" + e);
             }
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
 
@@ -578,6 +589,12 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPreExecute() {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            int currentOrientation = getResources().getConfiguration().orientation;
+            if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE)
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+            else
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
             wakeLock.acquire();
             mAmbitStatusText.setText(getString(R.string.sync_move_status));
             Log.d(TAG,"Syncing activity... ");
@@ -637,6 +654,7 @@ public class MainActivity extends Activity {
             if (sync_ret == -1) {
                 //sync error
                 showToast("Failed to sync Move!", Toast.LENGTH_LONG);
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                 return;
             }
 
@@ -671,6 +689,8 @@ public class MainActivity extends Activity {
             } catch (RuntimeException e) {
                 Log.i(TAG, "wakelock release exception:" + e);
             }
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
 
