@@ -86,6 +86,7 @@ public class LogHeader implements Parcelable, Serializable {
 
     // getters for move info activity
 
+    public int getMoveTypeInt() { return activity_type; }
     public String getMoveType() { return activity_name; }
     public String getMoveTime() { return sdf.format(datetime); }
     public String getMoveDuration() { return formatDuration(duration); }

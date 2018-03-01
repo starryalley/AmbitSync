@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.USB_PERMISSION" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -31,6 +33,10 @@
         <activity
             android:name=".MoveInfoActivity"
             android:label="MoveInfo">
+        </activity>
+        <activity
+            android:name="com.sweetzpot.stravazpot.authenticaton.ui.StravaLoginActivity"
+            android:label="login_strava">
         </activity>
         <provider
             android:name="android.support.v4.content.FileProvider"

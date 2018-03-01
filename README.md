@@ -158,6 +158,8 @@ GPX file validator:
 
 - [Android Ambit](https://github.com/uvwxy/android-ambit)
 
+- [StravaZpot-Android](https://github.com/SweetzpotAS/StravaZpot-Android)
+
 
 ### License
 
@@ -166,6 +168,7 @@ The app uses the following main libraries:
 - hidapi: GPLv3, BSD, or original hidapi license
 - libusb: LGPL v2.1
 - iconv: GPLv3
+- StravaZpot: Apache License v2
 
 So the project is released under GPLv3 as well.
 

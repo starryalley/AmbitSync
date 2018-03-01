@@ -48,14 +48,15 @@
                 android:text=""
                 android:textAppearance="@android:style/TextAppearance.Small" />
 
-            <Space android:layout_gravity="fill"
-                android:layout_width="0dp"
+            <com.sweetzpot.stravazpot.authenticaton.ui.StravaLoginButton
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/login_button"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
-            <Space android:layout_gravity="fill"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_gravity="center"
+                android:layout_weight="2"
+                app:type="orange" />
+
             <Button
                 android:id="@+id/buttonOpenGPX"
                 android:layout_width="wrap_content"

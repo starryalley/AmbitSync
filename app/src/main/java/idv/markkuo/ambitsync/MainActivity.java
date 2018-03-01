@@ -255,6 +255,7 @@ public class MainActivity extends Activity {
                 intent.putExtra("moveCadence", h.getMoveCadence());
                 intent.putExtra("gpxDir", gpxDir);
                 intent.putExtra("moveFileName", e.getFilename("gpx"));
+                intent.putExtra("moveTypeInt", h.getMoveTypeInt());
 
                 startActivity(intent);
             }
