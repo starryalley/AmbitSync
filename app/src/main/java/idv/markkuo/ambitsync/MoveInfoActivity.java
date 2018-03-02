@@ -3,9 +3,11 @@ package idv.markkuo.ambitsync;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
@@ -26,6 +28,8 @@ import com.sweetzpot.stravazpot.authenticaton.ui.StravaLoginActivity;
 import com.sweetzpot.stravazpot.authenticaton.ui.StravaLoginButton;
 import com.sweetzpot.stravazpot.common.api.AuthenticationConfig;
 import com.sweetzpot.stravazpot.common.api.StravaConfig;
+import com.sweetzpot.stravazpot.common.api.exception.StravaAPIException;
+import com.sweetzpot.stravazpot.common.api.exception.StravaUnauthorizedException;
 import com.sweetzpot.stravazpot.upload.api.UploadAPI;
 import com.sweetzpot.stravazpot.upload.model.DataType;
 import com.sweetzpot.stravazpot.upload.model.UploadActivityType;
@@ -51,12 +55,15 @@ public class MoveInfoActivity extends Activity {
     private String filename;
     private int moveTypeInt;
 
+    // for strava login and upload
     private static final int RQ_LOGIN = 1001;
     private StravaLoginButton stravaButton;
-    private AuthenticationConfig stravaConfig;
     private static final int STRAVA_CLIENT_ID = 23675;
     private static final String STRAVA_CLIENT_SECRET = "b832b7743701776d2873265881f2b9a8c9313181";
     private Token stravaToken = null;
+
+    // app storage for strava token
+    private SharedPreferences prefs;
 
     private void getViewHandles() {
         moveState = (TextView) findViewById(R.id.moveState);
@@ -141,8 +148,14 @@ public class MoveInfoActivity extends Activity {
         getViewHandles();
         setupViews();
 
-        // strava
-        stravaConfig = AuthenticationConfig.create().debug().build();
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        //prefs = getPreferences(MODE_PRIVATE);
+
+        String token = prefs.getString("strava_token", "");
+        if (token != "") {
+            Log.i(TAG, "getting strava token from shared preference");
+            stravaToken = new Token(token);
+        }
 
         // set button handlers
         buttonOpen.setOnClickListener(new View.OnClickListener() {
@@ -197,22 +210,28 @@ public class MoveInfoActivity extends Activity {
 
         if(requestCode == RQ_LOGIN && resultCode == RESULT_OK && data != null) {
             final String code = data.getStringExtra(StravaLoginActivity.RESULT_CODE);
-            Log.d(TAG, "strava code:" + code);
-            // Use code to obtain token
+
 
             new Thread() {
                 @Override
                 public void run() {
-                    AuthenticationAPI api = new AuthenticationAPI(stravaConfig);
-                    LoginResult result = api.getTokenForApp(AppCredentials.with(STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET))
-                            .withCode(code)
-                            .execute();
-                    stravaToken = result.getToken();
-                    Log.d(TAG, "strava token:" + stravaToken);
+                    try {
+                        AuthenticationConfig stravaConfig = AuthenticationConfig.create().debug().build();
+                        AuthenticationAPI api = new AuthenticationAPI(stravaConfig);
+                        // Use code to obtain token
+                        LoginResult result = api.getTokenForApp(AppCredentials.with(STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET))
+                                .withCode(code)
+                                .execute();
+                        stravaToken = result.getToken();
+                        Log.d(TAG, "got strava token");
 
-                    //TODO: need to store the token in app storage so that it can be used for any future request.
-                    //also need to remove it when the StravaUnauthorizedException is thrown because
-                    // it means the token is no longer valid and the user must authenticate again.
+                        // token starts with "Bearer "
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putString("strava_token", stravaToken.toString().substring(7));
+                        editor.commit();
+                    } catch (Exception e) {
+                        Log.w(TAG, "exception:" + e);
+                    }
 
                     //TODO: if we have the token, show "upload to strava". else we show "connect to strava"
                 }
@@ -276,8 +295,9 @@ public class MoveInfoActivity extends Activity {
                     .build();
 
             UploadAPI uploadAPI = new UploadAPI(config);
-
+            SharedPreferences.Editor editor = prefs.edit();
             try {
+                publishProgress(0);
                 Log.d(TAG, "uploading file:" + new File(gpxDir, filename).getAbsolutePath());
                 Log.d(TAG, "set activity type to:" + type.toString());
                 UploadStatus uploadStatus = uploadAPI.uploadFile(new File(gpxDir, filename))
@@ -291,22 +311,34 @@ public class MoveInfoActivity extends Activity {
                         .withExternalID(filename)
                         .execute();
 
-                publishProgress(0);
+                publishProgress(1);
                 Log.d(TAG, "activity id:" + uploadStatus.getActivityID());
                 Log.d(TAG, "upload status:" + uploadStatus.getStatus());
 
-                // wait 3 second and check status
-                Thread.sleep(3 * 1000);
-                publishProgress(1);
+                // wait 5 second and check status
+                // TODO: we should not use AyncTask because if during this time user navigates back
+                // to the main activity then probably we are in trouble
+                // probably we should separate the upload status check?
+                Thread.sleep(5 * 1000);
+                publishProgress(2);
                 uploadStatus = uploadAPI.checkUploadStatus(uploadStatus.getId())
                         .execute();
 
                 Log.d(TAG, "uploads status:" + uploadStatus.getStatus() + " activity ID:" + uploadStatus.getActivityID());
-                activity = uploadStatus.getActivityID();
-                // TODO: add a button to open strava activity with link:
-                // https://www.strava.com/activities/[activityID]
+                if (uploadStatus.getActivityID() != null)
+                    activity = uploadStatus.getActivityID();
+            } catch (StravaUnauthorizedException e) {
+                Log.w(TAG, "upload failed. Unauthorized:" + e);
+                // remove the token since it's no longer valid
+                editor.remove("strava_token");
+                editor.apply();
+                publishProgress(-1);
+            } catch (StravaAPIException e) {
+                Log.w(TAG, "upload failed with strava exception:" + e);
+                publishProgress(-2);
             } catch (Exception e) {
                 Log.w(TAG, "upload failed with exception:" + e);
+                publishProgress(-3);
             }
             return activity;
         }
@@ -314,22 +346,32 @@ public class MoveInfoActivity extends Activity {
         @Override
         protected void onProgressUpdate(Integer... progress) {
             if (progress[0] == 0)
-                Toast.makeText(getApplicationContext(), "Upload completed!",
+                Toast.makeText(getApplicationContext(), "Start uploading in background",
                         Toast.LENGTH_SHORT).show();
             else if (progress[0] == 1)
+                Toast.makeText(getApplicationContext(), "Upload completed! Checking status in 5 sec...",
+                        Toast.LENGTH_SHORT).show();
+            else if (progress[0] == 2)
                 Toast.makeText(getApplicationContext(), "Checking upload status...",
                         Toast.LENGTH_SHORT).show();
+            else if (progress[0] == -1)
+                Toast.makeText(getApplicationContext(), "Token expired. Please login to Strava",
+                        Toast.LENGTH_LONG).show();
+            else if (progress[0] == -2)
+                Toast.makeText(getApplicationContext(), "Upload failed. Probably it's already uploaded?",
+                        Toast.LENGTH_LONG).show();
+            else if (progress[0] == -3)
+                Toast.makeText(getApplicationContext(), "Failed to upload to Strava",
+                        Toast.LENGTH_LONG).show();
         }
 
         @Override
         protected void onPostExecute(Integer act_id) {
 
-            if (act_id == null || act_id == -1)
-                Toast.makeText(getApplicationContext(), "Failed to upload to Strava",
-                        Toast.LENGTH_LONG).show();
-            else
+            if (act_id != null || act_id > 0)
                 Toast.makeText(getApplicationContext(), "Upload successful, Strava activity ID:" + act_id,
                         Toast.LENGTH_LONG).show();
+            //TODO: show a button to open the link
         }
     }
 
