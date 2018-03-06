@@ -266,7 +266,6 @@ public class MoveInfoActivity extends Activity {
         private UploadActivityType type;
         private NotificationCompat.Builder mBuilder;
         private int notificationId = 225;
-        private String ACTION_OPEN_STRAVA = "action_open_strava";
 
         public StravaUploadAsyncTask() {
             super();
@@ -386,21 +385,9 @@ public class MoveInfoActivity extends Activity {
             } else if (progress[0] == 1) {
                 Toast.makeText(getApplicationContext(), "Upload completed! Checking status in 5 sec...",
                         Toast.LENGTH_SHORT).show();
-                mBuilder.setSmallIcon(R.drawable.icon)
-                        .setContentTitle("AmbitSync Strava upload")
-                        .setContentText("Upload completed! Checking status in 5 sec...")
-                        .setChannelId(CHANNEL_ID)
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-                notificationManager.notify(notificationId, mBuilder.build());
             } else if (progress[0] == 2) {
                 Toast.makeText(getApplicationContext(), "Checking upload status...",
                         Toast.LENGTH_SHORT).show();
-                mBuilder.setSmallIcon(R.drawable.icon)
-                        .setContentTitle("AmbitSync Strava upload")
-                        .setContentText("Checking upload status...")
-                        .setChannelId(CHANNEL_ID)
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-                notificationManager.notify(notificationId, mBuilder.build());
             } else if (progress[0] == -1)
                 Toast.makeText(getApplicationContext(), "Token expired. Please login to Strava",
                         Toast.LENGTH_LONG).show();
@@ -418,30 +405,33 @@ public class MoveInfoActivity extends Activity {
 
         @Override
         protected void onPostExecute(Integer act_id) {
-
-            if (act_id != null || act_id > 0) {
+            if (act_id != null && act_id > 0) {
                 Toast.makeText(getApplicationContext(), "Upload successful, Strava activity ID:" + act_id,
                         Toast.LENGTH_LONG).show();
                 Uri stravalink = Uri.parse("https://www.strava.com/activities/" + act_id);
                 Intent intent = new Intent(Intent.ACTION_VIEW, stravalink);
-                intent.setAction(ACTION_OPEN_STRAVA);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
                         0, intent, 0);
-
                 notificationManager.cancel(notificationId);
-
                 mBuilder.setSmallIcon(R.drawable.icon)
                         .setContentTitle("AmbitSync Strava upload")
                         .setContentText("Upload successful! Strava activity ID:" + act_id)
                         .setChannelId(CHANNEL_ID)
                         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                        .setContentIntent(pendingIntent) // TODO: not sure if we want to enable this. Probably not.
-                        //.setAutoCancel(true)  //TODO:enable when open activity works
-                        .addAction(R.drawable.icon, "Open Activity in Strava", pendingIntent); //TODO: it doesn't work!
+                        .setContentIntent(pendingIntent)
+                        .setAutoCancel(true)
+                        .addAction(R.drawable.icon, "Open Activity in Strava", pendingIntent);
 
                 // this is a new notification so it will persist if user uploads more than 1 activity to Strava
                 notificationManager.notify(act_id, mBuilder.build());
+            } else {
+                mBuilder.setSmallIcon(R.drawable.icon)
+                        .setContentTitle("AmbitSync Strava upload")
+                        .setContentText("Upload failed.")
+                        .setChannelId(CHANNEL_ID)
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                notificationManager.notify(notificationId, mBuilder.build());
             }
         }
     }
