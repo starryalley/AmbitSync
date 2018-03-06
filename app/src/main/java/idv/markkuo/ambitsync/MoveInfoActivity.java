@@ -1,13 +1,19 @@
 package idv.markkuo.ambitsync;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
@@ -40,6 +46,7 @@ import java.io.File;
 
 public class MoveInfoActivity extends Activity {
     private final String TAG = "AmbitMoveInfo";
+    private static String CHANNEL_ID = "ambitsync";
 
     // in the gridview
     private TextView moveState, moveDateTime, moveDuration, moveAscent, moveDescent, moveAscentTime,
@@ -61,6 +68,8 @@ public class MoveInfoActivity extends Activity {
     private static final int STRAVA_CLIENT_ID = 23675;
     private static final String STRAVA_CLIENT_SECRET = "b832b7743701776d2873265881f2b9a8c9313181";
     private Token stravaToken = null;
+
+    private NotificationManager notificationManager;
 
     // app storage for strava token
     private SharedPreferences prefs;
@@ -157,6 +166,19 @@ public class MoveInfoActivity extends Activity {
             stravaToken = new Token(token);
         }
 
+        // for notification
+        notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.channel_name);
+            String description = getString(R.string.channel_description);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name,
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(description);
+            // Register the channel with the system
+            notificationManager.createNotificationChannel(channel);
+        }
+
         // set button handlers
         buttonOpen.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -241,8 +263,15 @@ public class MoveInfoActivity extends Activity {
     }
 
     private class StravaUploadAsyncTask extends AsyncTask<Void, Integer, Integer> {
+        private UploadActivityType type;
+        private NotificationCompat.Builder mBuilder;
+        private int notificationId = 225;
+        private String ACTION_OPEN_STRAVA = "action_open_strava";
 
-        UploadActivityType type;
+        public StravaUploadAsyncTask() {
+            super();
+            mBuilder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID);
+        }
 
         @Override
         protected void onPreExecute() {
@@ -345,16 +374,34 @@ public class MoveInfoActivity extends Activity {
 
         @Override
         protected void onProgressUpdate(Integer... progress) {
-            if (progress[0] == 0)
+            if (progress[0] == 0) {
                 Toast.makeText(getApplicationContext(), "Start uploading in background",
                         Toast.LENGTH_SHORT).show();
-            else if (progress[0] == 1)
+                mBuilder.setSmallIcon(R.drawable.icon)
+                        .setContentTitle("AmbitSync Strava upload")
+                        .setContentText("Uploading to Strava in background")
+                        .setChannelId(CHANNEL_ID)
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                notificationManager.notify(notificationId, mBuilder.build());
+            } else if (progress[0] == 1) {
                 Toast.makeText(getApplicationContext(), "Upload completed! Checking status in 5 sec...",
                         Toast.LENGTH_SHORT).show();
-            else if (progress[0] == 2)
+                mBuilder.setSmallIcon(R.drawable.icon)
+                        .setContentTitle("AmbitSync Strava upload")
+                        .setContentText("Upload completed! Checking status in 5 sec...")
+                        .setChannelId(CHANNEL_ID)
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                notificationManager.notify(notificationId, mBuilder.build());
+            } else if (progress[0] == 2) {
                 Toast.makeText(getApplicationContext(), "Checking upload status...",
                         Toast.LENGTH_SHORT).show();
-            else if (progress[0] == -1)
+                mBuilder.setSmallIcon(R.drawable.icon)
+                        .setContentTitle("AmbitSync Strava upload")
+                        .setContentText("Checking upload status...")
+                        .setChannelId(CHANNEL_ID)
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                notificationManager.notify(notificationId, mBuilder.build());
+            } else if (progress[0] == -1)
                 Toast.makeText(getApplicationContext(), "Token expired. Please login to Strava",
                         Toast.LENGTH_LONG).show();
             else if (progress[0] == -2)
@@ -363,15 +410,39 @@ public class MoveInfoActivity extends Activity {
             else if (progress[0] == -3)
                 Toast.makeText(getApplicationContext(), "Failed to upload to Strava",
                         Toast.LENGTH_LONG).show();
+            else
+                return;
+
+
         }
 
         @Override
         protected void onPostExecute(Integer act_id) {
 
-            if (act_id != null || act_id > 0)
+            if (act_id != null || act_id > 0) {
                 Toast.makeText(getApplicationContext(), "Upload successful, Strava activity ID:" + act_id,
                         Toast.LENGTH_LONG).show();
-            //TODO: show a button to open the link
+                Uri stravalink = Uri.parse("https://www.strava.com/activities/" + act_id);
+                Intent intent = new Intent(Intent.ACTION_VIEW, stravalink);
+                intent.setAction(ACTION_OPEN_STRAVA);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
+                        0, intent, 0);
+
+                notificationManager.cancel(notificationId);
+
+                mBuilder.setSmallIcon(R.drawable.icon)
+                        .setContentTitle("AmbitSync Strava upload")
+                        .setContentText("Upload successful! Strava activity ID:" + act_id)
+                        .setChannelId(CHANNEL_ID)
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setContentIntent(pendingIntent) // TODO: not sure if we want to enable this. Probably not.
+                        //.setAutoCancel(true)  //TODO:enable when open activity works
+                        .addAction(R.drawable.icon, "Open Activity in Strava", pendingIntent); //TODO: it doesn't work!
+
+                // this is a new notification so it will persist if user uploads more than 1 activity to Strava
+                notificationManager.notify(act_id, mBuilder.build());
+            }
         }
     }
 

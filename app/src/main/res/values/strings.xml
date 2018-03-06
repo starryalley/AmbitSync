@@ -33,4 +33,6 @@
     <string name="calories">Calories</string>
     <string name="cadence">Cadence</string>
     <string name="open_gpx">Open GPX</string>
+    <string name="channel_name">ambitsync_channel</string>
+    <string name="channel_description">AmbitSync Strava upload status</string>
 </resources>
