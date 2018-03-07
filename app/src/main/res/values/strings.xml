@@ -18,6 +18,7 @@
     <string name="info_text">Please use an OTG cable and\nconnect the Ambit watch using\nthe normal Ambit USB cable to this device.\n\nWhen connected, wait a few seconds for the USB permission dialog to appear.</string>
 
     <!-- for MoveInfoActivity -->
+    <string name="gpx_downloaded">(GPX downloaded)</string>
     <string name="distance">Distance</string>
     <string name="speed">Speed</string>
     <string name="ascent">Ascent</string>
@@ -32,7 +33,13 @@
     <string name="recovery_time">Recovery Time</string>
     <string name="calories">Calories</string>
     <string name="cadence">Cadence</string>
+    <string name="strava_token_key">strava_token</string>
     <string name="open_gpx">Open GPX</string>
-    <string name="channel_name">ambitsync_channel</string>
+    <string name="channel_name">AmbitSync</string>
     <string name="channel_description">AmbitSync Strava upload status</string>
+    <string name="open_in_strava">Open in Strava</string>
+    <string name="strava_url">https://www.strava.com/activities/</string>
+    <string name="msg_upload_to_strava">Uploading to Strava...</string>
+    <string name="msg_upload_failed">Upload failed</string>
+    <string name="notification_title">AmbitSync Strava Upload</string>
 </resources>

@@ -109,7 +109,7 @@ public class MoveInfoActivity extends Activity {
 
         // fill those textviews with intent extra
         if (isDownloaded)
-            moveState.setText("(GPX downloaded)");
+            moveState.setText(getString(R.string.gpx_downloaded));
         else
             moveState.setText("");
         moveDateTime.setText(getIntent().getStringExtra("moveDateTime"));
@@ -160,7 +160,7 @@ public class MoveInfoActivity extends Activity {
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         //prefs = getPreferences(MODE_PRIVATE);
 
-        String token = prefs.getString("strava_token", "");
+        String token = prefs.getString(getString(R.string.strava_token_key), "");
         if (token != "") {
             Log.i(TAG, "getting strava token from shared preference");
             stravaToken = new Token(token);
@@ -233,7 +233,6 @@ public class MoveInfoActivity extends Activity {
         if(requestCode == RQ_LOGIN && resultCode == RESULT_OK && data != null) {
             final String code = data.getStringExtra(StravaLoginActivity.RESULT_CODE);
 
-
             new Thread() {
                 @Override
                 public void run() {
@@ -249,10 +248,25 @@ public class MoveInfoActivity extends Activity {
 
                         // token starts with "Bearer "
                         SharedPreferences.Editor editor = prefs.edit();
-                        editor.putString("strava_token", stravaToken.toString().substring(7));
+                        editor.putString(getString(R.string.strava_token_key), stravaToken.toString().substring(7));
                         editor.commit();
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(), "Strava Login Successful!",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     } catch (Exception e) {
                         Log.w(TAG, "exception:" + e);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(), "Strava Login Failed!",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
 
                     //TODO: if we have the token, show "upload to strava". else we show "connect to strava"
@@ -266,10 +280,18 @@ public class MoveInfoActivity extends Activity {
         private UploadActivityType type;
         private NotificationCompat.Builder mBuilder;
         private int notificationId = 225;
+        private String notificationTitle = getString(R.string.notification_title);
 
         public StravaUploadAsyncTask() {
             super();
             mBuilder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID);
+        }
+
+        private int getNotificationIcon() {
+            // use white icon with transparent background if it's L, M, N only
+            boolean useWhiteIcon = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+                                    Build.VERSION.SDK_INT <= Build.VERSION_CODES.N);
+            return useWhiteIcon ? R.drawable.icon_silhouette : R.drawable.icon;
         }
 
         @Override
@@ -343,10 +365,12 @@ public class MoveInfoActivity extends Activity {
                 Log.d(TAG, "activity id:" + uploadStatus.getActivityID());
                 Log.d(TAG, "upload status:" + uploadStatus.getStatus());
 
-                // wait 5 second and check status
-                // TODO: we should not use AyncTask because if during this time user navigates back
+
+                // TODO: we should not use AyncTask. But leave it as it is now
+                // because if during this time user navigates back
                 // to the main activity then probably we are in trouble
                 // probably we should separate the upload status check?
+
                 Thread.sleep(5 * 1000);
                 publishProgress(2);
                 uploadStatus = uploadAPI.checkUploadStatus(uploadStatus.getId())
@@ -358,7 +382,7 @@ public class MoveInfoActivity extends Activity {
             } catch (StravaUnauthorizedException e) {
                 Log.w(TAG, "upload failed. Unauthorized:" + e);
                 // remove the token since it's no longer valid
-                editor.remove("strava_token");
+                editor.remove(getString(R.string.strava_token_key));
                 editor.apply();
                 publishProgress(-1);
             } catch (StravaAPIException e) {
@@ -373,13 +397,19 @@ public class MoveInfoActivity extends Activity {
 
         @Override
         protected void onProgressUpdate(Integer... progress) {
+            String message = "";
             if (progress[0] == 0) {
-                Toast.makeText(getApplicationContext(), "Start uploading in background",
-                        Toast.LENGTH_SHORT).show();
-                mBuilder.setSmallIcon(R.drawable.icon)
-                        .setContentTitle("AmbitSync Strava upload")
-                        .setContentText("Uploading to Strava in background")
+                message = getString(R.string.msg_upload_to_strava);
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+
+                mBuilder.setSmallIcon(getNotificationIcon())
+                        .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
+                        .setContentTitle(notificationTitle)
+                        .setContentText(message)
+                        .setStyle(new NotificationCompat.BigTextStyle()
+                                .bigText(message))
                         .setChannelId(CHANNEL_ID)
+                        .setOngoing(true)
                         .setPriority(NotificationCompat.PRIORITY_DEFAULT);
                 notificationManager.notify(notificationId, mBuilder.build());
             } else if (progress[0] == 1) {
@@ -397,39 +427,50 @@ public class MoveInfoActivity extends Activity {
             else if (progress[0] == -3)
                 Toast.makeText(getApplicationContext(), "Failed to upload to Strava",
                         Toast.LENGTH_LONG).show();
-            else
-                return;
-
-
         }
 
         @Override
         protected void onPostExecute(Integer act_id) {
+            String message = "";
+
             if (act_id != null && act_id > 0) {
-                Toast.makeText(getApplicationContext(), "Upload successful, Strava activity ID:" + act_id,
-                        Toast.LENGTH_LONG).show();
-                Uri stravalink = Uri.parse("https://www.strava.com/activities/" + act_id);
+                message = "Upload successful! Strava activity ID:" + act_id;
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+
+                Uri stravalink = Uri.parse(getString(R.string.strava_url) + act_id);
                 Intent intent = new Intent(Intent.ACTION_VIEW, stravalink);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
                         0, intent, 0);
+
                 notificationManager.cancel(notificationId);
-                mBuilder.setSmallIcon(R.drawable.icon)
-                        .setContentTitle("AmbitSync Strava upload")
-                        .setContentText("Upload successful! Strava activity ID:" + act_id)
+
+                NotificationCompat.Action action = new NotificationCompat.Action.Builder(
+                        R.drawable.icon_silhouette, getString(R.string.open_in_strava), pendingIntent).build();
+                mBuilder.setSmallIcon(getNotificationIcon())
+                        .setContentTitle(notificationTitle)
+                        .setContentText(message)
+                        .setStyle(new NotificationCompat.BigTextStyle()
+                                .bigText(message))
                         .setChannelId(CHANNEL_ID)
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setContentIntent(pendingIntent)
                         .setAutoCancel(true)
-                        .addAction(R.drawable.icon, "Open Activity in Strava", pendingIntent);
+                        .setOngoing(false)
+                        .addAction(action);
 
                 // this is a new notification so it will persist if user uploads more than 1 activity to Strava
                 notificationManager.notify(act_id, mBuilder.build());
             } else {
-                mBuilder.setSmallIcon(R.drawable.icon)
-                        .setContentTitle("AmbitSync Strava upload")
-                        .setContentText("Upload failed.")
+                message = getString(R.string.msg_upload_failed);
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                mBuilder.setSmallIcon(getNotificationIcon())
+                        .setContentTitle(notificationTitle)
+                        .setContentText(message)
+                        .setStyle(new NotificationCompat.BigTextStyle()
+                                .bigText(message))
                         .setChannelId(CHANNEL_ID)
+                        .setOngoing(false)
                         .setPriority(NotificationCompat.PRIORITY_DEFAULT);
                 notificationManager.notify(notificationId, mBuilder.build());
             }
