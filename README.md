@@ -122,8 +122,8 @@ The `AmbitRecord` class holds everything read from Ambit watch and it is `Parcel
 
 ### Project TODO list
 
-- Add Strava upload support (23.2.2018)
-  - yes, strava web version on mobile browser isn't so good for uploading GPX file manually. I should support it someday.
+- Add Strava upload support (7.3.2018)
+  - strava upload has been implemented as of now. UI isn't good though. Should work on it some day.
 
 - More move type tests:
   - only some basic GPS based move types are tested: "cycle", "treking", "run" etc. 
