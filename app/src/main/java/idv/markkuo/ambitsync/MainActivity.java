@@ -1,6 +1,7 @@
 package idv.markkuo.ambitsync;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -485,6 +486,7 @@ public class MainActivity extends Activity {
     private class LogHeaderAsyncTask extends AsyncTask<Void, Integer, ArrayList<LogEntry>> {
         private int sync_ret;
 
+        @SuppressLint("SourceLockedOrientationActivity")
         @Override
         protected void onPreExecute() {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -572,6 +574,7 @@ public class MainActivity extends Activity {
     private class LogAsyncTask extends AsyncTask<LogEntry, Integer, LogEntry> {
         private int sync_ret;
 
+        @SuppressLint("SourceLockedOrientationActivity")
         @Override
         protected void onPreExecute() {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

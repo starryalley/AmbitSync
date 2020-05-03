@@ -13,9 +13,9 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.FileProvider;
-import android.support.v7.app.AppCompatDelegate;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.FileProvider;
+import androidx.appcompat.app.AppCompatDelegate;
 import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
@@ -75,33 +75,33 @@ public class MoveInfoActivity extends Activity {
     private SharedPreferences prefs;
 
     private void getViewHandles() {
-        moveState = (TextView) findViewById(R.id.moveState);
-        moveDateTime = (TextView) findViewById(R.id.moveDateTime);
-        moveDuration = (TextView) findViewById(R.id.moveDuration);
-        moveAscent = (TextView) findViewById(R.id.moveAscent);
-        moveDescent = (TextView) findViewById(R.id.moveDescent);
-        moveAscentTime = (TextView) findViewById(R.id.moveAscentTime);
-        moveDescentTime = (TextView) findViewById(R.id.moveDescentTime);
-        moveRecoveryTime = (TextView) findViewById(R.id.moveRecoveryTime);
-        moveSpeed = (TextView) findViewById(R.id.moveSpeed);
-        moveSpeedText = (TextView) findViewById(R.id.moveSpeedText);
-        moveAltMax = (TextView) findViewById(R.id.moveAltMax);
-        moveAltMin = (TextView) findViewById(R.id.moveAltMin);
-        moveHR = (TextView) findViewById(R.id.moveHR);
-        moveHRText = (TextView) findViewById(R.id.moveHRText);
-        movePTE = (TextView) findViewById(R.id.movePTE);
-        moveType = (TextView) findViewById(R.id.moveType);
-        moveTemp = (TextView) findViewById(R.id.moveTemp);
-        moveDistance = (TextView) findViewById(R.id.moveDistance);
-        moveCalories = (TextView) findViewById(R.id.moveCalories);
-        moveCadenceText = (TextView) findViewById(R.id.moveCadenceText);
-        moveCadence = (TextView) findViewById(R.id.moveCadence);
+        moveState = findViewById(R.id.moveState);
+        moveDateTime = findViewById(R.id.moveDateTime);
+        moveDuration = findViewById(R.id.moveDuration);
+        moveAscent = findViewById(R.id.moveAscent);
+        moveDescent = findViewById(R.id.moveDescent);
+        moveAscentTime = findViewById(R.id.moveAscentTime);
+        moveDescentTime = findViewById(R.id.moveDescentTime);
+        moveRecoveryTime = findViewById(R.id.moveRecoveryTime);
+        moveSpeed = findViewById(R.id.moveSpeed);
+        moveSpeedText = findViewById(R.id.moveSpeedText);
+        moveAltMax = findViewById(R.id.moveAltMax);
+        moveAltMin = findViewById(R.id.moveAltMin);
+        moveHR = findViewById(R.id.moveHR);
+        moveHRText = findViewById(R.id.moveHRText);
+        movePTE = findViewById(R.id.movePTE);
+        moveType = findViewById(R.id.moveType);
+        moveTemp = findViewById(R.id.moveTemp);
+        moveDistance = findViewById(R.id.moveDistance);
+        moveCalories = findViewById(R.id.moveCalories);
+        moveCadenceText = findViewById(R.id.moveCadenceText);
+        moveCadence = findViewById(R.id.moveCadence);
 
-        buttonOpen = (Button) findViewById(R.id.buttonOpenGPX);
+        buttonOpen = findViewById(R.id.buttonOpenGPX);
 
-        movePath = (TextView) findViewById(R.id.moveFilePath);
+        movePath = findViewById(R.id.moveFilePath);
 
-        stravaButton = (StravaLoginButton) findViewById(R.id.login_button);
+        stravaButton = findViewById(R.id.login_button);
     }
 
     private void setupViews() {
