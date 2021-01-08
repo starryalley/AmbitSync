@@ -18,9 +18,7 @@
  *
  * Contributors:
  *
- * Modified by Mark Kuo for compilation using Android NDK
  */
-#include "android_def.h"
 #include "protocol.h"
 #include "libambit_int.h"
 #include "crc16.h"
@@ -92,6 +90,7 @@ int libambit_protocol_command(ambit_object_t *object, uint16_t command, uint8_t 
 {
     int ret = 0;
     uint8_t buf[64];
+    memset(buf, 0, 64);
     int packet_count = 1;
     ambit_msg_header_t *msg = (ambit_msg_header_t *)buf;
     uint8_t packet_payload_len;
@@ -108,7 +107,7 @@ int libambit_protocol_command(ambit_object_t *object, uint16_t command, uint8_t 
     msg->MP = 0x5d;
     msg->parts_seq = htole16(packet_count);
     msg->command = htobe16(command);
-    msg->send_recv = htole16(legacy_format == 1 ? 1 : legacy_format == 2 ? 0x15 : legacy_format == 3 ? 0x0a : 5);
+    msg->send_recv = htole16(legacy_format == 1 ? 1 : legacy_format == 2 ? 0x15 : 5);
     msg->format = htole16(legacy_format == 1 ? 0 : 9);
     msg->sequence = htole16(object->sequence_no);
     msg->payload_len = htole32(datalen);
@@ -159,6 +158,8 @@ int libambit_protocol_command(ambit_object_t *object, uint16_t command, uint8_t 
                 reply_data_len -= packet_payload_len;
             }
             else {
+                libambit_protocol_free(*reply_data);
+
                 ret = -1;
             }
         }

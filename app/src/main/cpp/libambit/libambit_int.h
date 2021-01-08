@@ -18,7 +18,6 @@
  *
  * Contributors:
  *
- * Modified by Mark Kuo for compilation using Android NDK
  */
 #ifndef __LIBAMBIT_INT_H__
 #define __LIBAMBIT_INT_H__

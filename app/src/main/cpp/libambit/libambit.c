@@ -18,9 +18,7 @@
  *
  * Contributors:
  *
- * Modified by Mark Kuo for using on Android
  */
-#define DEBUG_PRINT_INFO
 #include "libambit.h"
 #include "libambit_int.h"
 #include "device_support.h"
@@ -50,21 +48,6 @@
  */
 static int device_info_get(ambit_object_t *object, ambit_device_info_t *info);
 static ambit_device_info_t * ambit_device_info_new(const struct hid_device_info *dev);
-
-/* the ambit USB device's open file descriptor passed from Android Java API */
-int ambit_fd;
-
-/* usbfs path for the ambit USB device */
-const char *ambit_path;
-
-/*
- * Mark Kuo: setting fd and usbfs path to libamit
- */
-void libambit_set_device(int fd, const char *path)
-{
-    ambit_fd = fd;
-    ambit_path = path;
-}
 
 /*
  * Public functions
@@ -195,6 +178,9 @@ void libambit_close(ambit_object_t *object)
             hid_close(object->handle);
             /* necessary if device is disconnected and re-connected while app is still alive */
             hid_exit();
+        }
+        if(object->driver_data != NULL) {
+            free(object->driver_data);
         }
 
         free((char *) object->device_info.path);
@@ -367,8 +353,11 @@ void libambit_sport_mode_device_settings_free(ambit_sport_mode_device_settings_t
     if (settings->sport_modes != NULL) {
         for (i=0; i<settings->sport_modes_count; i++) {
             if (settings->sport_modes[i].display != NULL) {
-                if (settings->sport_modes[i].display->view != NULL) {
-                    free(settings->sport_modes[i].display->view);
+                int j;
+                for(j = 0;j < settings->sport_modes[i].displays_count;j++) {
+                    if (settings->sport_modes[i].display[j].view != NULL) {
+                        free(settings->sport_modes[i].display[j].view);
+                    }
                 }
                 free(settings->sport_modes[i].display);
             }
@@ -387,6 +376,8 @@ void libambit_sport_mode_device_settings_free(ambit_sport_mode_device_settings_t
         }
         free(settings->sport_mode_groups);
     }
+
+    free(settings);
 }
 
 ambit_sport_mode_device_settings_t *libambit_malloc_sport_mode_device_settings(void)
@@ -397,6 +388,7 @@ ambit_sport_mode_device_settings_t *libambit_malloc_sport_mode_device_settings(v
     ambit_device_settings->sport_mode_groups = NULL;
     ambit_device_settings->sport_mode_groups_count = 0;
     ambit_device_settings->app_ids_count = 0;
+    memset(ambit_device_settings->app_ids, 0, sizeof(ambit_device_settings->app_ids));
 
     return ambit_device_settings;
 }
@@ -447,6 +439,12 @@ bool libambit_malloc_sport_mode_groups(uint16_t count, ambit_sport_mode_device_s
 
 bool libambit_malloc_sport_mode_app_ids(uint16_t count, ambit_sport_mode_t *ambit_sport_mode)
 {
+    if(count == 0) {
+        ambit_sport_mode->apps_list = NULL;
+        ambit_sport_mode->apps_list_count = 0;
+        return false;
+    }
+
     ambit_apps_list_t *ambit_app_ids = (ambit_apps_list_t *)malloc(sizeof(ambit_apps_list_t) * count);
     if (ambit_app_ids != NULL) {
         ambit_sport_mode->apps_list = ambit_app_ids;
@@ -461,6 +459,12 @@ bool libambit_malloc_sport_mode_app_ids(uint16_t count, ambit_sport_mode_t *ambi
 
 bool libambit_malloc_sport_mode_displays(uint16_t count, ambit_sport_mode_t *ambit_sport_mode)
 {
+    if(count == 0) {
+        ambit_sport_mode->display = NULL;
+        ambit_sport_mode->displays_count = 0;
+        return false;
+    }
+
     ambit_sport_mode_display_t *ambit_displays = (ambit_sport_mode_display_t *)malloc(sizeof(ambit_sport_mode_display_t) * count);
     if (ambit_displays != NULL) {
         ambit_sport_mode->display = ambit_displays;
@@ -481,6 +485,12 @@ bool libambit_malloc_sport_mode_displays(uint16_t count, ambit_sport_mode_t *amb
 
 bool libambit_malloc_sport_mode_view(uint16_t count, ambit_sport_mode_display_t *ambit_displays)
 {
+    if(count == 0) {
+        ambit_displays->view = NULL;
+        ambit_displays->views_count = 0;
+        return false;
+    }
+
     uint16_t *ambit_views = (uint16_t *)malloc(sizeof(uint16_t) * count);
     if (ambit_views != NULL) {
         ambit_displays->view = ambit_views;
@@ -781,99 +791,6 @@ static ambit_device_info_t * ambit_device_info_new(const struct hid_device_info 
     }
 
     return device;
-}
-
-/*
- *  Mark Kuo: used by Android Java layer to initialize libambit based on VID/PID of the device
- */
-ambit_object_t *libambit_create(unsigned short vid, unsigned short pid)
-{
-    ambit_object_t *object = NULL;
-    ambit_device_info_t *device;
-    const ambit_known_device_t *known_device;
-    hid_device *hid = hid_open(vid, pid, NULL);
-
-    if (!hid) {
-        LOG_INFO("unable to open HID device");
-        return NULL;
-    }
-
-    if (!libambit_device_support_known(vid, pid)) {
-        LOG_INFO("ignoring unknown device (VID/PID: %04x/%04x)", vid, pid);
-        hid_close(hid);
-        return NULL;
-    }
-
-    device = calloc(1, sizeof(*device));
-    if (!device) {
-        hid_close(hid);
-        return NULL;
-    }
-
-    object = calloc(1, sizeof(*object));
-    if (!object) {
-        free(device);
-        hid_close(hid);
-        return NULL;
-    }
-
-    // fill up object and device structure
-    object->handle = hid;
-    object->sequence_no = 0;
-
-    device->path = strdup(ambit_path);
-    device->vendor_id  = vid;
-    device->product_id = pid;
-
-    char *serial = device->serial;
-    if (0 == device_info_get(object, device)) {
-        device->serial = serial;
-
-        known_device = libambit_device_support_find(device->vendor_id, device->product_id, device->model, device->fw_version);
-
-        if (!known_device) {
-            LOG_INFO("device isn't known!");
-            free(device);
-            free(object);
-            hid_close(hid);
-            return NULL;
-        }
-
-        LOG_INFO("device %s is %ssupported", known_device->name, known_device->supported ? "" : "not ");
-        device->is_supported = known_device->supported;
-        device->name = strdup(known_device->name);
-
-        memcpy(&object->device_info, device, sizeof(*device));
-        object->driver = known_device->driver;
-
-        hid_set_nonblocking(object->handle, true);
-
-        LOG_INFO("initialize driver...");
-        // Initialize driver
-        object->driver->init(object, known_device->driver_param);
-
-#ifdef DEBUG_PRINT_INFO
-        char fw_version[LIBAMBIT_VERSION_LENGTH+1];
-        char hw_version[LIBAMBIT_VERSION_LENGTH+1];
-        version_string(fw_version, device->fw_version);
-        version_string(hw_version, device->hw_version);
-
-        LOG_INFO("Ambit: %s: '%s' (serial: %s, VID/PID: %04x/%04x, "
-                         "nick: %s, F/W: %s, H/W: %s, supported: %s)",
-                 device->path, device->name, device->serial,
-                 device->vendor_id, device->product_id,
-                 device->model, fw_version, hw_version,
-                 (device->is_supported ? "YES" : "NO"));
-#endif
-    } else {
-        LOG_ERROR("cannot get device info from %s", device->path);
-        free(device);
-        free(object);
-        hid_close(hid);
-        object = NULL;
-    }
-
-    return object;
 }
 
 ambit_personal_settings_t* libambit_personal_settings_alloc() {

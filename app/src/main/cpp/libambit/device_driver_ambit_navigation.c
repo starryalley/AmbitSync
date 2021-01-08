@@ -20,10 +20,8 @@
  * Lars Andre Landås (landas@gmail.com)
  * Kristoffer Tonheim (kristoffer.tonheim@gmail.com)
  *
- * Modified by Mark Kuo for compilation using Android NDK
  */
 
-#include "android_def.h"
 #include "libambit.h"
 #include "device_driver_ambit_navigation.h"
 #include "protocol.h"
@@ -143,6 +141,7 @@ int ambit_navigation_waypoint_read(ambit_object_t *object, ambit_pack_waypoint_t
     for(x=0; x<(*way_point_count); ++x) {
 
         send_waypoint_data = malloc(sizeof(ambit_pack_waypoint_t));
+        memset(send_waypoint_data, 0, sizeof(ambit_pack_waypoint_t));
         send_data = malloc(sizeof(ambit_pack_waypoint_t));
 
         send_waypoint_data->index = htole16(x);

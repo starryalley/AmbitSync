@@ -18,9 +18,7 @@
  *
  * Contributors:
  *
- * Modified by Mark Kuo for compilation using Android NDK
  */
-#include "android_def.h"
 #include "device_driver.h"
 #include "device_driver_common.h"
 #include "device_driver_ambit_navigation.h"
@@ -31,6 +29,7 @@
 #include "sport_mode_serialize.h"
 #include "debug.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -129,7 +128,6 @@ static int log_read(ambit_object_t *object, ambit_log_skip_cb skip_cb, ambit_log
     size_t replylen = 0;
     uint16_t log_entries_total = 0;
     uint16_t log_entries_walked = 0;
-    uint16_t header_entries_walked = 0;
 
     uint32_t more = 0x00000400;
 
@@ -173,7 +171,7 @@ static int log_read(ambit_object_t *object, ambit_log_skip_cb skip_cb, ambit_log
 
         // Loop through logs while more entries exists
         while (more == 0x00000400) {
-            //LOG_INFO("Reading next header");
+            LOG_INFO("Reading next header");
             // Go to next entry
             if (libambit_protocol_command(object, ambit_command_log_head_step, NULL, 0, &reply_data, &replylen, 0) != 0) {
                 LOG_WARNING("Failed to walk to next header");
@@ -191,22 +189,17 @@ static int log_read(ambit_object_t *object, ambit_log_skip_cb skip_cb, ambit_log
 
             if (libambit_protocol_command(object, ambit_command_log_head, NULL, 0, &reply_data, &replylen, 0) == 0) {
                 if (replylen > 8 && libambit_pmem20_log_parse_header(reply_data + 8, replylen - 8, &log_header, LIBAMBIT_PMEM20_FLAGS_NONE) == 0) {
-
-                    // additionally posting the progress to header read progress cb by Mark Kuo
-                    header_entries_walked++;
-                    if (progress_cb != NULL) {
-                        progress_cb(userref, log_entries_total, header_entries_walked, 100*header_entries_walked/log_entries_total);
-                    }
-
                     if (skip_cb(userref, &log_header) != 0) {
                         // Header was NOT skipped, break out!
                         read_pmem = true;
                         LOG_INFO("Found new entry, start reading log data");
+                        libambit_protocol_free(reply_data);
                         break;
                     }
                 }
                 else {
                     LOG_ERROR("Failed to parse log header");
+                    libambit_protocol_free(reply_data);
                     return -1;
                 }
                 libambit_protocol_free(reply_data);
@@ -251,6 +244,8 @@ static int log_read(ambit_object_t *object, ambit_log_skip_cb skip_cb, ambit_log
                         push_cb(userref, log_entry);
                     }
                     entries_read++;
+
+                    libambit_log_entry_free(log_entry);
                 }
             }
             else {
@@ -264,7 +259,11 @@ static int log_read(ambit_object_t *object, ambit_log_skip_cb skip_cb, ambit_log
     }
 
     LOG_INFO("%d entries read", entries_read);
-
+    
+    if(log_header.activity_name != NULL) {
+        free(log_header.activity_name);
+    }
+    
     return entries_read;
 }
 
@@ -337,6 +336,8 @@ static int sport_mode_write(ambit_object_t *object, ambit_sport_mode_device_sett
     if (data != NULL) {
         int dataLen = serialize_sport_mode_device_settings(ambit_device_settings, data);
         ret = libambit_pmem20_sport_mode_write(&object->driver_data->pmem20, data, dataLen, false);
+
+        free(data);
     }
 
     return ret;
@@ -360,6 +361,8 @@ static int app_data_write(ambit_object_t *object, ambit_sport_mode_device_settin
     if (data != NULL) {
         int dataLen = serialize_app_data(ambit_device_settings, ambit_apps, data);
         ret = libambit_pmem20_app_data_write(&object->driver_data->pmem20, data, dataLen, false);
+
+        free(data);
     }
 
     return ret;

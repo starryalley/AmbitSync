@@ -18,9 +18,7 @@
  *
  * Contributors:
  *
- * Modified by Mark Kuo for compilation using Android NDK
  */
-#include "android_def.h"
 #include "pmem20.h"
 #include "protocol.h"
 #include "sha256.h"
@@ -587,12 +585,12 @@ int libambit_pmem20_data_write(libambit_pmem20_t *object, const uint32_t start_a
     size_t offset = 0;
 
     bufptrs[0] = data;
-    bufsizes = object->chunk_size;
+    bufsizes = datalen > object->chunk_size ? object->chunk_size : datalen;
 
     // Write first chunk
     ret = write_data_chunk(object->ambit_object, address, 1, bufptrs, &bufsizes);
     offset += bufsizes;
-    address += object->chunk_size;
+    address += bufsizes;
 
     // Write rest of the chunks
     while (ret == 0 && offset < datalen) {
@@ -781,6 +779,13 @@ static int parse_sample(uint8_t *buf, size_t offset, uint8_t **spec, ambit_log_e
                 log_entry->samples[*sample_count].u.periodic.values[i].type = ambit_log_sample_periodic_type_ruleoutput5;
                 log_entry->samples[*sample_count].u.periodic.values[i].u.ruleoutput5 = read32(buf, int_offset + spec_offset);
                 break;
+              default:
+                LOG_WARNING("Found unknown periodic sample spec type (0x%02x): len: %d", spec_type, sample_len);
+                log_entry->samples[*sample_count].type = ambit_log_sample_type_unknown;
+                log_entry->samples[*sample_count].u.unknown.datalen = sample_len;
+                log_entry->samples[*sample_count].u.unknown.data = malloc(sample_len);
+                memcpy(log_entry->samples[*sample_count].u.unknown.data, buf + offset + 2, sample_len);
+                break;
             }
         }
         ret = 1;
@@ -922,7 +927,7 @@ static int parse_sample(uint8_t *buf, size_t offset, uint8_t **spec, ambit_log_e
             log_entry->samples[*sample_count].u.fwinfo.build_date.msec = read16inc(buf, &int_offset);
             break;
           default:
-            LOG_WARNING("Found unknown episodic sample type (0x%02x)", episodic_type);
+            LOG_WARNING("Found unknown episodic sample type (0x%02x): len: %d", episodic_type, sample_len);
             log_entry->samples[*sample_count].type = ambit_log_sample_type_unknown;
             log_entry->samples[*sample_count].u.unknown.datalen = sample_len;
             log_entry->samples[*sample_count].u.unknown.data = malloc(sample_len);
@@ -941,7 +946,7 @@ static int parse_sample(uint8_t *buf, size_t offset, uint8_t **spec, ambit_log_e
         break;
     }
 
-    //LOG_INFO("Sample #0x%02x of type 0x%02x", *sample_count,log_entry->samples[*sample_count].type);
+    LOG_INFO("Sample #0x%02x of type 0x%02x", *sample_count,log_entry->samples[*sample_count].type);
     *sample_count += ret;
 
     return ret;
@@ -982,14 +987,6 @@ static void correct_samples(ambit_log_entry_t *log_entry, int32_t *time_compensa
             utcsource = &log_entry->samples[sample_count];
             // Calculate UTC base time
             add_time(&utcsource->u.gps_base.utc_base_time, 0-utcsource->time, &utcbase);
-            // Mark Kuo: adding debug info for UTC base time
-            LOG_INFO("****utc_base_time: %04d-%02d-%02d %02d:%02d:%02d",
-                     utcsource->u.gps_base.utc_base_time.year, utcsource->u.gps_base.utc_base_time.month,
-                     utcsource->u.gps_base.utc_base_time.day, utcsource->u.gps_base.utc_base_time.hour,
-                     utcsource->u.gps_base.utc_base_time.minute, utcsource->u.gps_base.utc_base_time.msec/1000);
-            LOG_INFO("****offset: %d ms", 0-utcsource->time);
-            LOG_INFO("****new UTC base: %04d-%02d-%02d %02d:%02d:%02d", utcbase.year, utcbase.month,
-                     utcbase.day, utcbase.hour, utcbase.minute, utcbase.msec/1000);
         }
 
         // Calculate positions
@@ -1172,28 +1169,11 @@ static void add_time(ambit_date_time_t *intime, int32_t offset, ambit_date_time_
     outtime->minute = tm->tm_min;
     outtime->hour = tm->tm_hour;
     outtime->day = tm->tm_mday;
-    outtime->month = tm->tm_mon;
-    outtime->year = tm->tm_year + 1900; //modified by Mark Kuo
+    outtime->month = tm->tm_mon + 1;
+    outtime->year = tm->tm_year + 1900;
 }
 
-//Mark Kuo: re-implement to_timeval using timegm()
-static void to_timeval(ambit_date_time_t *ambit_time, struct timeval *timeval) {
-    struct tm tm;
-
-    tm.tm_sec = ambit_time->msec / 1000;
-    tm.tm_min = ambit_time->minute;
-    tm.tm_hour = ambit_time->hour;
-    tm.tm_mday = ambit_time->day;
-    tm.tm_mon = ambit_time->month;
-    tm.tm_year = ambit_time->year - 1900;
-    timeval->tv_sec = timegm(&tm);
-    timeval->tv_usec = (ambit_time->msec % 1000) * 1000;
-}
-
-/*
-//Mark Kuo: for some reason this doesn't work on Android
 static int is_leap(unsigned int y) {
-    y += 1900;
     return (y % 4) == 0 && ((y % 100) != 0 || (y % 400) == 0);
 }
 
@@ -1206,11 +1186,11 @@ static void to_timeval(ambit_date_time_t *ambit_time, struct timeval *timeval) {
     timeval->tv_usec = 0;
     int i;
 
-    for (i = 70; i < ambit_time->year; ++i) {
+    for (i = 1970; i < ambit_time->year; ++i) {
         timeval->tv_sec += is_leap(i) ? 366 : 365;
     }
 
-    for (i = 0; i < ambit_time->month; ++i) {
+    for (i = 0; i < ambit_time->month-1; ++i) {
         timeval->tv_sec += ndays[is_leap(ambit_time->year)][i];
     }
     timeval->tv_sec += ambit_time->day - 1;
@@ -1222,4 +1202,3 @@ static void to_timeval(ambit_date_time_t *ambit_time, struct timeval *timeval) {
     timeval->tv_sec += ambit_time->msec / 1000;
     timeval->tv_usec = (ambit_time->msec % 1000)*1000;
 }
-*/

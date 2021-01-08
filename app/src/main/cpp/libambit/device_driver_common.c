@@ -18,9 +18,7 @@
  *
  * Contributors:
  *
- * Modified by Mark Kuo for compilation using Android NDK
  */
-#include "android_def.h"
 #include "device_driver_common.h"
 #include "protocol.h"
 #include "debug.h"

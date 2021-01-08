@@ -18,7 +18,6 @@
  *
  * Contributors:
  *
- * Modified by Mark Kuo for outputing log using Android log system
  */
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
@@ -34,9 +33,21 @@ typedef enum debug_level_e {
 
 void debug_printf(debug_level_t level, const char *file, int line, const char *func, const char *fmt, ...);
 
+#ifdef DEBUG_PRINT_ERROR
 #define LOG_ERROR(fmt, ...) debug_printf(debug_level_err, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#else
+#define LOG_ERROR(fmt, ...)
+#endif
+#ifdef DEBUG_PRINT_WARNING
 #define LOG_WARNING(fmt, ...) debug_printf(debug_level_warn, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#else
+#define LOG_WARNING(fmt, ...)
+#endif
+#ifdef DEBUG_PRINT_INFO
 #define LOG_INFO(fmt, ...) debug_printf(debug_level_info, __FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#else
+#define LOG_INFO(fmt, ...)
+#endif
 #define ONLYDEBUGVAR(x) (void)(x)
 
 #endif /* __DEBUG_H__ */

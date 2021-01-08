@@ -46,6 +46,9 @@ typedef struct int_known_device_s {
  * Static variables
  */
 static int_known_device_t known_devices[] = {
+    { SUUNTO_USB_VENDOR_ID, 0x002d, "Loon", {0x01,0x00,0x04,0x0}, { "Suunto Traverse Alpha", true, &ambit_device_driver_ambit3, 0x0400, {0x02,0x04,0x59,0x00} } },
+    { SUUNTO_USB_VENDOR_ID, 0x002c, "Kaka", {0x01,0x00,0x1b,0x00}, { "Suunto Ambit3 Vertical", true, &ambit_device_driver_ambit3, 0x0400, {0x02,0x04,0x59,0x00} } },
+    { SUUNTO_USB_VENDOR_ID, 0x002b, "Jabiru", {0x01,0x00,0x04,0x00}, { "Suunto Traverse", true, &ambit_device_driver_ambit3, 0x0400, {0x02,0x04,0x59,0x00} } },
     { SUUNTO_USB_VENDOR_ID, 0x001e, "Ibisbill", {0x00,0x00,0x00,0x00}, { "Suunto Ambit3 Run", true, &ambit_device_driver_ambit3, 0x0400, {0x02,0x04,0x59,0x00} } },
     { SUUNTO_USB_VENDOR_ID, 0x001c, "Finch", {0x00,0x00,0x00,0x00}, { "Suunto Ambit3 Sport", true, &ambit_device_driver_ambit3, 0x0400, {0x02,0x04,0x59,0x00} } },
     { SUUNTO_USB_VENDOR_ID, 0x001b, "Emu", {0x00,0x00,0x00,0x00}, { "Suunto Ambit3 Peak", true, &ambit_device_driver_ambit3, 0x0400, {0x02,0x04,0x59,0x00} } },
@@ -87,7 +90,7 @@ const ambit_known_device_t *libambit_device_support_find(uint16_t vendor_id, uin
         if (vendor_id == known_devices[i].vid &&
             product_id == known_devices[i].pid &&
             strcmp(model, known_devices[i].model) == 0 &&
-            (libambit_fw_version_number (fw_version) >= libambit_fw_version_number (known_devices[i].min_sw_version))) {
+            libambit_fw_version_number(fw_version) >= libambit_fw_version_number(known_devices[i].min_sw_version)) {
             // Found matching entry, reset to this one!
             device = &known_devices[i].public_info;
             break;
