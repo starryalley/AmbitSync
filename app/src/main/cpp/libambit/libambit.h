@@ -26,6 +26,8 @@
 #include <stdbool.h>
 #include <time.h>
 
+#include "android_def.h"
+
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
 extern "C" {
 #endif
@@ -588,6 +590,23 @@ typedef struct ambit_app_rules_s {
  *  accessed.
  */
 ambit_device_info_t * libambit_enumerate(void);
+
+/** \brief Create ambit_object_t directly from VID/PID
+ *
+ *  This avoids libambit_enumerate() and libambit_new() which involves reading
+ *  other USB devices on the system. We don't have permission on non-rooted
+ *  Android devices.
+ */
+ambit_object_t *libambit_create(unsigned short vid, unsigned short pid);
+
+/* the Ambit USB device's linux file descriptor, passed from Java */
+extern int ambit_fd;
+
+/* the Ambit USB device's linux path, passed from Java */
+extern const char *ambit_path;
+
+/* call by Java to set ambit_fd and ambit_path to this native library */
+void libambit_set_device(int fd, const char *path);
 
 /** \brief Release resources acquired by libambit_enumerate()
  */

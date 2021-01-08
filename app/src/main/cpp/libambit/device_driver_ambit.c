@@ -128,6 +128,7 @@ static int log_read(ambit_object_t *object, ambit_log_skip_cb skip_cb, ambit_log
     size_t replylen = 0;
     uint16_t log_entries_total = 0;
     uint16_t log_entries_walked = 0;
+    uint16_t header_entries_walked = 0;
 
     uint32_t more = 0x00000400;
 
@@ -189,6 +190,12 @@ static int log_read(ambit_object_t *object, ambit_log_skip_cb skip_cb, ambit_log
 
             if (libambit_protocol_command(object, ambit_command_log_head, NULL, 0, &reply_data, &replylen, 0) == 0) {
                 if (replylen > 8 && libambit_pmem20_log_parse_header(reply_data + 8, replylen - 8, &log_header, LIBAMBIT_PMEM20_FLAGS_NONE) == 0) {
+                    // additionally posting the progress to header read progress cb by Mark Kuo
+                    header_entries_walked++;
+                    if (progress_cb != NULL) {
+                        progress_cb(userref, log_entries_total, header_entries_walked, 100*header_entries_walked/log_entries_total);
+                    }
+
                     if (skip_cb(userref, &log_header) != 0) {
                         // Header was NOT skipped, break out!
                         read_pmem = true;

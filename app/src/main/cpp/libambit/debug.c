@@ -23,6 +23,10 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <android/log.h>
+
+#define TAG "libambit"
+#define MAX_LOG_CHAR 256
 
 /*
  * Local variables
@@ -33,38 +37,36 @@ static char debug_info_text[] = "INFO";
 
 void debug_printf(debug_level_t level, const char *file, int line, const char *func, const char *fmt, ...)
 {
-    FILE *output;
-    const char *leveltxt;
+    char logline[MAX_LOG_CHAR];
     va_list ap;
+    enum android_LogPriority priority;
 
-    if (level == debug_level_err) {
-        output = stderr;
-        leveltxt = debug_err_text;
-    }
-    else if (level == debug_level_warn) {
-        output = stderr;
-        leveltxt = debug_warn_text;
-    }
-    else {
-        output = stdout;
-        leveltxt = debug_info_text;
+    switch (level) {
+        case debug_level_err:
+            priority = ANDROID_LOG_ERROR;
+            break;
+        case debug_level_warn:
+            priority = ANDROID_LOG_WARN;
+            break;
+        case debug_level_info:
+            priority = ANDROID_LOG_INFO;
+            break;
+        default:
+            priority = ANDROID_LOG_DEBUG;
     }
 
-    fprintf(output, "libambit %s: ", leveltxt);
 #ifdef DEBUG_PRINT_FILE_LINE
-    fprintf(output, "%s:%d ", file, line);
+    sprintf(logline, "%s:%d ", file, line);
 #else
     // Remove compiler warning
     file = NULL;
     line = 0;
 #endif
-    fprintf(output, "%s(): ", func);
+    sprintf(logline, "%s(): ", func);
 
     va_start(ap, fmt);
-    vfprintf(output, fmt, ap);
+    vsprintf(logline, fmt, ap);
     va_end(ap);
 
-    fprintf(output, "\n");
-
-    fflush(output);
+    __android_log_print(priority, TAG, "%s", logline);
 }

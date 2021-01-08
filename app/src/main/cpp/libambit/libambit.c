@@ -19,6 +19,7 @@
  * Contributors:
  *
  */
+#define DEBUG_PRINT_INFO
 #include "libambit.h"
 #include "libambit_int.h"
 #include "device_support.h"
@@ -52,6 +53,22 @@ static ambit_device_info_t * ambit_device_info_new(const struct hid_device_info 
 /*
  * Public functions
  */
+
+/* the ambit USB device's open file descriptor passed from Android Java API */
+int ambit_fd;
+
+/* usbfs path for the ambit USB device */
+const char *ambit_path;
+
+/*
+ * Mark Kuo: setting fd and usbfs path to libamit
+ */
+void libambit_set_device(int fd, const char *path)
+{
+    ambit_fd = fd;
+    ambit_path = path;
+}
+
 ambit_device_info_t * libambit_enumerate(void)
 {
     ambit_device_info_t *devices = NULL;
@@ -791,6 +808,99 @@ static ambit_device_info_t * ambit_device_info_new(const struct hid_device_info 
     }
 
     return device;
+}
+
+/*
+ *  Mark Kuo: used by Android Java layer to initialize libambit based on VID/PID of the device
+ */
+ambit_object_t *libambit_create(unsigned short vid, unsigned short pid)
+{
+    ambit_object_t *object = NULL;
+    ambit_device_info_t *device;
+    const ambit_known_device_t *known_device;
+    hid_device *hid = hid_open(vid, pid, NULL);
+
+    if (!hid) {
+        LOG_INFO("unable to open HID device");
+        return NULL;
+    }
+
+    if (!libambit_device_support_known(vid, pid)) {
+        LOG_INFO("ignoring unknown device (VID/PID: %04x/%04x)", vid, pid);
+        hid_close(hid);
+        return NULL;
+    }
+
+    device = calloc(1, sizeof(*device));
+    if (!device) {
+        hid_close(hid);
+        return NULL;
+    }
+
+    object = calloc(1, sizeof(*object));
+    if (!object) {
+        free(device);
+        hid_close(hid);
+        return NULL;
+    }
+
+    // fill up object and device structure
+    object->handle = hid;
+    object->sequence_no = 0;
+
+    device->path = strdup(ambit_path);
+    device->vendor_id  = vid;
+    device->product_id = pid;
+
+    char *serial = device->serial;
+    if (0 == device_info_get(object, device)) {
+        device->serial = serial;
+
+        known_device = libambit_device_support_find(device->vendor_id, device->product_id, device->model, device->fw_version);
+
+        if (!known_device) {
+            LOG_INFO("device isn't known!");
+            free(device);
+            free(object);
+            hid_close(hid);
+            return NULL;
+        }
+
+        LOG_INFO("device %s is %ssupported", known_device->name, known_device->supported ? "" : "not ");
+        device->is_supported = known_device->supported;
+        device->name = strdup(known_device->name);
+
+        memcpy(&object->device_info, device, sizeof(*device));
+        object->driver = known_device->driver;
+
+        hid_set_nonblocking(object->handle, true);
+
+        LOG_INFO("initialize driver...");
+        // Initialize driver
+        object->driver->init(object, known_device->driver_param);
+
+#ifdef DEBUG_PRINT_INFO
+        char fw_version[LIBAMBIT_VERSION_LENGTH+1];
+        char hw_version[LIBAMBIT_VERSION_LENGTH+1];
+        version_string(fw_version, device->fw_version);
+        version_string(hw_version, device->hw_version);
+
+        LOG_INFO("Ambit: %s: '%s' (serial: %s, VID/PID: %04x/%04x, "
+                         "nick: %s, F/W: %s, H/W: %s, supported: %s)",
+                 device->path, device->name, device->serial,
+                 device->vendor_id, device->product_id,
+                 device->model, fw_version, hw_version,
+                 (device->is_supported ? "YES" : "NO"));
+#endif
+    } else {
+        LOG_ERROR("cannot get device info from %s", device->path);
+        free(device);
+        free(object);
+        hid_close(hid);
+        object = NULL;
+    }
+
+    return object;
 }
 
 ambit_personal_settings_t* libambit_personal_settings_alloc() {

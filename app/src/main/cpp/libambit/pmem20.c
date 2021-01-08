@@ -987,6 +987,14 @@ static void correct_samples(ambit_log_entry_t *log_entry, int32_t *time_compensa
             utcsource = &log_entry->samples[sample_count];
             // Calculate UTC base time
             add_time(&utcsource->u.gps_base.utc_base_time, 0-utcsource->time, &utcbase);
+            // Mark Kuo: adding debug info for UTC base time
+            LOG_INFO("****utc_base_time: %04d-%02d-%02d %02d:%02d:%02d",
+                     utcsource->u.gps_base.utc_base_time.year, utcsource->u.gps_base.utc_base_time.month,
+                     utcsource->u.gps_base.utc_base_time.day, utcsource->u.gps_base.utc_base_time.hour,
+                     utcsource->u.gps_base.utc_base_time.minute, utcsource->u.gps_base.utc_base_time.msec/1000);
+            LOG_INFO("****offset: %d ms", 0-utcsource->time);
+            LOG_INFO("****new UTC base: %04d-%02d-%02d %02d:%02d:%02d", utcbase.year, utcbase.month,
+                     utcbase.day, utcbase.hour, utcbase.minute, utcbase.msec/1000);
         }
 
         // Calculate positions
