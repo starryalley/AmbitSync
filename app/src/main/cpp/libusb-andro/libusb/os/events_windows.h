@@ -1,6 +1,7 @@
 /*
- * poll_posix: poll compatibility wrapper for POSIX systems
- * Copyright © 2013 RealVNC Ltd.
+ * libusb event abstraction on Microsoft Windows
+ *
+ * Copyright © 2020 Chris Dickens <christopher.a.dickens@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,39 +16,31 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
  */
 
-#include <config.h>
+#ifndef LIBUSB_EVENTS_WINDOWS_H
+#define LIBUSB_EVENTS_WINDOWS_H
 
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <stdlib.h>
+typedef HANDLE usbi_os_handle_t;
+#define USBI_OS_HANDLE_FORMAT_STRING	"HANDLE %p"
 
-#include "libusbi.h"
+typedef struct usbi_event {
+	HANDLE hEvent;
+} usbi_event_t;
+#define USBI_EVENT_OS_HANDLE(e)	((e)->hEvent)
+#define USBI_EVENT_POLL_EVENTS	0
+#define USBI_INVALID_EVENT	{ INVALID_HANDLE_VALUE }
 
-int usbi_pipe(int pipefd[2])
+#define HAVE_OS_TIMER 1
+typedef struct usbi_timer {
+	HANDLE hTimer;
+} usbi_timer_t;
+#define USBI_TIMER_OS_HANDLE(t)	((t)->hTimer)
+#define USBI_TIMER_POLL_EVENTS	0
+
+static inline int usbi_timer_valid(usbi_timer_t *timer)
 {
-	int ret = pipe(pipefd);
-	if (ret != 0) {
-		return ret;
-	}
-	ret = fcntl(pipefd[1], F_GETFL);
-	if (ret == -1) {
-		usbi_dbg("Failed to get pipe fd flags: %d", errno);
-		goto err_close_pipe;
-	}
-	ret = fcntl(pipefd[1], F_SETFL, ret | O_NONBLOCK);
-	if (ret != 0) {
-		usbi_dbg("Failed to set non-blocking on new pipe: %d", errno);
-		goto err_close_pipe;
-	}
-
-	return 0;
-
-err_close_pipe:
-	usbi_close(pipefd[0]);
-	usbi_close(pipefd[1]);
-	return ret;
+	return timer->hTimer != NULL;
 }
+
+#endif
