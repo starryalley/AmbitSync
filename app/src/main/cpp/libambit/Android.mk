@@ -15,6 +15,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../iconv-android/include/ \
 	$(LOCAL_PATH)/android/ \
 	$(LOCAL_PATH)/../libusb-andro/libusb/ \
+	$(LOCAL_PATH)/../libusb-andro/ \
 	$(LOCAL_PATH)
 
 LOCAL_SRC_FILES := \
