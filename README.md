@@ -28,9 +28,9 @@ The app uses the excellent libambit (from [openambit](https://github.com/openamb
 
 ## Limitations
 
-Ambit watch support is provided solely by the awesome [openambit project](https://github.com/openambitproject/openambit). If your watch is supported by openambit, it should work here. No functional change is made in the underlying libambit except for a minor change to support Android. See below for changes made on libambit. 
+Ambit watch support is provided solely by the awesome [openambit project](https://github.com/openambitproject/openambit). If your Suunto watch is supported by openambit, it should work here. No functional change is made in the underlying libambit except for a minor change to support Android. See below for changes made on libambit. 
 
-AmbitSync does read-only access from your watch and converts them into GPX format following a simple algorithm (see below "GPX conversion" section). **It doesn't "sync" to Movescount website at all, nor does it make any query from Movescount.** The app simply doesn't require network access.
+AmbitSync does read-only access from your watch and converts them into GPX format following a simple algorithm (see below "GPX conversion" section). **It doesn't "sync" to Movescount website at all, nor does it make any query from Movescount.** The app simply doesn't require network access to download moves from the watch, but it actually does require internet access for uploading the activity (move) to Strava.
 
 
 ## Tested devices
@@ -48,7 +48,7 @@ I use my Ambit 2 to test.
 
 ## How to run
 
-Sync the project, import it using Android Studio 3.0+ (I'm using 3.0.1 as of now) and build the apk.
+Sync the project, import it using Android Studio 3.0+ (I'm using 4.2 beta 3 as of Jan/2021) and build the apk.
 
 Or use the app/release/app-release.apk in project and copy it to your device to install, or use adb:
 ```adb install -r app/release/app-release.apk```
@@ -81,42 +81,34 @@ On Android OS a regular user (non-rooted device) has some limitation on the USB 
 2. in native layer it's not possible to "open" a USB device and get a file descriptor there.
 
 The common pattern here for native layer to access USB devices using libusb is:
-1. Use Android API (Java) to request access to the USB device whenever a targeted USB device is attached (use the `getDeviceList()` in `class UsbManager` )
+1. Use Android API (Java/Kotlin) to request access to the USB device whenever a targeted USB device is attached (use the `getDeviceList()` in `class UsbManager` )
 2. after user grants the permission, use Android API to open the device and get a file descriptor(fd) there
 3. Through JNI the main process passes the fd and the usbfs path to libusb
-4. by using the opened fd, libusb will be able to read/write to the USB device. However, it won't be able to enumerate all connected device and will only work through the fd and usbfs path. 
+4. by using the opened fd, libusb will be able to read/write to the USB device. However, it won't be able to enumerate all connected device and will only work through the fd. 
 
 
 ### Modification to libambit and hidapi:
 
-To make the communication to USB device possible using libusb, modification has been made in libambit, hidapi and libusb. For libusb, an excellent work is [add Android 5-7 support, pull request #242 for libusb](https://github.com/libusb/libusb/pull/242). AmbitSync has direct use of these patches to make libusb support Android.
+To make the communication to USB device possible using libusb, modification has been made in libambit and hidapi. AmbitSync has pulled the latest libusb code (Jan/2021) which already supports Android. See also the discussion here: [add Android 5-7 support, pull request #242 for libusb](https://github.com/libusb/libusb/pull/242).
 
 hidapi changes:
-1. hid_enumerate() now uses libusb_wrap_fd() without enumerating all USB devices. It will check for VID/PID for the correct device to access
-2. hid_open_path() now also uses libusb_wrap_fd() without enumerating all USB devices. 
+1. hid_enumerate() now uses `libusb_wrap_sys_device()` without enumerating all USB devices. It will check VID/PID for the correct device to access
+2. hid_open_path() now also uses `libusb_wrap_sys_device()` without enumerating all USB devices. 
 
 libambit changes:
 1. add android_def.h for some missing functions
 2. change debug.c to output log to Android log (logcat)
 3. device_driver_ambit.c: add additional progress report when reading header
-4. fixing some compilation issues on Android: pmem20.c and protocol.c
-5. libambit.c: 
+4. libambit.c: 
    - libambit_set_device(): used by Java to set the USB fd and path to the library
    - libambit_create(): used by Java to initialise Ambit device based on VID/PID
-
-### Native code limitation
-
-The app currently builds as 32bit only because when building for 64bit, libusb doesn't behave well (configuration descriptor always has short read: 
-```libusb  : [ 0.003209] [00006232] libusb: warning [parse_interface] short extra intf desc read 23/41)```
-
-And I didn't have time to pull all latest changes from libusb to see if this goes away. Anyway by setting gradle's ABI filter to "armeabi-v7a" to limit to 32bit build, the issue isn't observed.
 
 
 ### Further work
 
-AmbitSync is written in Java with a libambitsync library written in C to help with JNI between Java and libambit. Most of the log sample implemented in libambit is modeled in Java as well (except for some new additions to libambit). Openambit has implemented full sync with Movescount to make the best of those downloaded log samples. This app doesn't. 
+AmbitSync is written in Java with a libambitsync library written in C to help with JNI between Java and libambit. Most of the log sample implemented in libambit is modeled in Java as well (except for some new additions to libambit). Openambit has implemented full sync with Movescount to make the best of those downloaded log samples. However this app hasn't. 
 
-For those interested one can re-write in Java or modify Qt C++ codes from openambit and make it fully functional with Movescount. This app only reads the log and does a simple conversion to GPX, which suits my needs. I always can't wait to get back home with my computer to sync those moves and map them. With this app I can do it when I am still away with only my phone. 
+For those interested, one can re-write in Java or modify Qt C++ codes from openambit and make it fully functional with Movescount. This app only reads the log and does a simple conversion to GPX, which suits my needs. I always can't wait to get back home with my computer to sync those moves and map them. With this app I can do it when I am still away with only my phone. 
 
 The `AmbitRecord` class holds everything read from Ambit watch and it is `Parcelable`. Incomplete `toJson()` implementation is also there.
 
@@ -124,7 +116,7 @@ The `AmbitRecord` class holds everything read from Ambit watch and it is `Parcel
 ### Project TODO list
 
 - Add Strava upload support (7.3.2018)
-  - strava upload has been implemented as of now. UI isn't good though. Should work on it some day.
+  - strava upload has been implemented as of now. UI isn't good though. Bug exists such that it may show failure to upload but actually it succeeds. This should be reworked some day.
 
 - More move type tests:
   - only some basic GPS based move types are tested: "cycle", "treking", "run" etc. 
@@ -136,7 +128,7 @@ Logcat TAG filter:
 
 ```adb logcat 'libambit:* AmbitSync:* AmbitMoveInfo:* AmbitRecord:* AmbitLogEntry:* AmbitGPXWriter:* LogSample:* PeriodicLogSample:* libusb:* *:S'```
 
-(note: lots of verbose level log. You may want to use *:D instead for those tags)
+(note: lots of verbose level log. You may want to use *:D to filter them out)
 
 GPX file validator:
 
@@ -147,9 +139,7 @@ GPX file validator:
 
 - [openambit](https://github.com/openambitproject/openambit)
 
-- [hidapi](http://github.com/signal11/hidapi)
-
-- [hidapi on Android](https://github.com/Senseg/android_external_hidapi)
+- [hidapi](https://github.com/libusb/hidapi)
 
 - [libusb](https://github.com/libusb/libusb)
 
@@ -172,4 +162,3 @@ The app uses the following main libraries:
 - StravaZpot: Apache License v2
 
 So the project is released under GPLv3 as well.
-
