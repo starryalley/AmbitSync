@@ -1,6 +1,5 @@
 package idv.markkuo.ambitsync;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -9,18 +8,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.os.PowerManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -98,9 +93,6 @@ public class MainActivity extends Activity {
     // for ambit_device synchronization (calling JNI libambit)
     private ReentrantLock lock;
 
-    // for requesting external storage permission
-    final static int PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
-
     // for storing/saving objects to app storage, not used now just reserved for future use
     //private SharedPreferences mPrefs;
 
@@ -166,16 +158,6 @@ public class MainActivity extends Activity {
         registerReceiver(usbManagerBroadcastReceiver, new IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED));
         registerReceiver(usbManagerBroadcastReceiver, new IntentFilter(ACTION_USB_PERMISSION));
         mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
-
-        // check external storage permission and request if needed
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (getApplicationContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-                    PackageManager.PERMISSION_GRANTED) {
-                this.requestPermissions(
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-            }
-        }
 
         checkGPXOutputLocation();
 
@@ -296,23 +278,6 @@ public class MainActivity extends Activity {
                 Log.d(TAG, "Exit battery update thread");
             }
         };
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE:
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    showToast("Permission granted to write GPX to storage!",
-                            Toast.LENGTH_LONG);
-                    checkGPXOutputLocation();
-                } else {
-                    showToast("Permission to write storage denied! Not able to export GPX file",
-                            Toast.LENGTH_LONG);
-                }
-                break;
-        }
     }
 
     @Override
@@ -449,27 +414,23 @@ public class MainActivity extends Activity {
 
     private void checkGPXOutputLocation() {
         // initialize and check external storage status and update UI to show state if necessary
-        if(isExternalStorageWritable()) {
-            File root = android.os.Environment.getExternalStorageDirectory();
-            Log.d(TAG, "External file system root: " + root);
+        File root = getApplicationContext().getExternalFilesDir(null);
+        Log.d(TAG, "External file system root: " + root);
 
-            gpxDir = new File (root.getAbsolutePath() + "/" + getString(R.string.folder_name));
-            try {
-                if (!gpxDir.exists())
-                    gpxDir.mkdirs();
-                if (!gpxDir.canWrite()) {
-                    Log.w(TAG, "Can't write to storage path:" + gpxDir.getAbsolutePath());
-                    mOutputPathText.setText(getString(R.string.ext_no_permission));
-                } else {
-                    Log.d(TAG, "GPX Saving to" + gpxDir.getAbsolutePath());
-                    mOutputPathText.setText(getString(R.string.saving_to) + gpxDir.getAbsolutePath());
-                }
-            } catch (SecurityException e) {
-                Log.w(TAG, "Folder creation failure:" + e);
-                mOutputPathText.setText(getString(R.string.ext_error));
+        gpxDir = new File (root.getAbsolutePath() + "/" + getString(R.string.folder_name));
+        try {
+            if (!gpxDir.exists())
+                gpxDir.mkdirs();
+            if (!gpxDir.canWrite()) {
+                Log.w(TAG, "Can't write to storage path:" + gpxDir.getAbsolutePath());
+                mOutputPathText.setText(getString(R.string.ext_no_permission));
+            } else {
+                Log.d(TAG, "GPX Saving to" + gpxDir.getAbsolutePath());
+                mOutputPathText.setText(getString(R.string.saving_to) + gpxDir.getAbsolutePath());
             }
-        } else {
-            mOutputPathText.setText(getString(R.string.ext_not_available));
+        } catch (SecurityException e) {
+            Log.w(TAG, "Folder creation failure:" + e);
+            mOutputPathText.setText(getString(R.string.ext_error));
         }
     }
 
@@ -674,11 +635,6 @@ public class MainActivity extends Activity {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
-    }
-
-    private boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state);
     }
 
     // the Listview adapter class
